@@ -6,35 +6,10 @@ robotic systems, including CubeSats, UAVs, and ground stations.
 
 ---
 
-## COSMOS Core v5.0 focuses on:
-
-* A **seven-repository layered architecture** — each layer is independently buildable and
-  depends only on the layers below it
-* **Agent-based messaging and command/telemetry** — persistent processes with a named request
-  interface and UDP-broadcast heartbeat
-* **Orbital mechanics and physics simulation** — ephemeris, atmosphere, coordinate transforms,
-  spacecraft dynamics
-* **Minimal, reusable services** suitable for both embedded flight software and ground systems
-* **Automatic dependency delivery** — cloning any layer via `--recurse-submodules` pulls the
-  full dependency stack below it
-
-> ⚠️ COSMOS Core v5.0 and its documentation are actively developed.
-> If you encounter missing documentation or unexpected behavior, please open an issue.
-
----
-
-## Who is this for?
-
-* **Flight software developers** integrating COSMOS into embedded or flight systems
-* **Ground system developers** building mission operations tools
-* **Researchers and students** experimenting with distributed agent systems and orbital simulation
-
----
-
 ## v5.0 Repository Architecture
 
-COSMOS v5.0 replaces the monolithic `core` repository with seven independently versioned
-repositories arranged in a strict dependency chain:
+COSMOS v5.0 distributes its code across seven independently versioned repositories arranged in
+a strict dependency chain:
 
 ```
 thirdparty → kernel → micro-agent → simulator → agent → modules → ground-station
@@ -50,49 +25,96 @@ thirdparty → kernel → micro-agent → simulator → agent → modules → gr
 |  4 | [cosmosv5-modules](https://github.com/hsfl/cosmosv5-modules) | Pluggable agent capability modules (file, websocket, packet handler, propagator) |
 |  5 | [cosmosv5-ground-station](https://github.com/hsfl/cosmosv5-ground-station) | Ground-station hardware drivers and agents |
 
-Each repo includes its direct lower dependency as a git submodule under `deps/`.
+This **workspace repository** (`cosmosv5`) contains all seven layers as flat submodules and is
+the standard entry point for building and developing COSMOS.
 
 ---
 
 ## Quick Start
 
-### Which layer do you need?
-
-| Goal | Clone this repo |
-|------|----------------|
-| Write a COSMOS agent or spacecraft program | `cosmosv5-agent` |
-| Orbital simulation only (no agent framework) | `cosmosv5-simulator` |
-| Lightweight flight software or embedded target | `cosmosv5-micro-agent` |
-| Math, time, JSON, serial — no network stack | `cosmosv5-kernel` |
-| Ground station software | `cosmosv5-ground-station` |
-| Full stack | `cosmosv5-ground-station` |
-
-### Clone and build
-
-Cloning any layer with `--recurse-submodules` automatically delivers all layers below it.
+### Clone the workspace
 
 ```bash
-# Example: agent layer and all its dependencies
-git clone --recurse-submodules https://github.com/hsfl/cosmosv5-agent
-cd cosmosv5-agent
+git clone --recurse-submodules https://github.com/hsfl/cosmosv5.git
+cd cosmosv5
+```
+
+This delivers all seven layers in a flat directory tree — one checkout each, no duplication.
+
+### Build everything
+
+```bash
 mkdir build && cd build
 cmake ..
 cmake --build . -j$(nproc)
 ```
 
-If you forgot `--recurse-submodules` after cloning:
+### Build up to a specific layer
+
+To build only what you need, target specific libraries or programs:
 
 ```bash
-git submodule update --init --recursive
+mkdir build && cd build
+cmake ..
+cmake --build . --target CosmosAgent propagatorv3 -j$(nproc)
 ```
+
+CMake builds only the requested targets and their dependencies — lower layers compile
+automatically, upper layers are skipped.
 
 ### Prerequisites
 
-* CMake 3.16+
-* A C++17-capable compiler (GCC 9+, Clang 10+)
-* For the simulator layer: IERS EOP data, JPL ephemeris files, WMM.COF, DEM tiles
+* CMake 3.20+
+* A C++11-capable compiler (GCC 9+, Clang 10+)
+* IERS EOP data, JPL ephemeris files, WMM.COF, and DEM tiles for simulator-layer programs
   — see the [Getting Started guide](https://hsfl.github.io/cosmos-docs/pages/2-getting_started/index.html)
-  for resource file setup
+
+---
+
+## Using COSMOSv5 in an external project
+
+Add the workspace as a single submodule. Your project includes the cmake chain file for
+whichever layer it needs — the chain builds all layers below it automatically.
+
+### 1. Add the submodule
+
+```bash
+git submodule add https://github.com/hsfl/cosmosv5.git deps/cosmosv5
+git submodule update --init --recursive
+```
+
+### 2. CMakeLists.txt
+
+```cmake
+set(COSMOS_SOURCE "${CMAKE_SOURCE_DIR}/deps/cosmosv5")
+set(COSMOS_LIBS pthread)
+
+# Replace "agent" with whichever top layer your project needs.
+# The chain builds everything from thirdparty up to that layer automatically.
+include(${COSMOS_SOURCE}/agent/cmake/use_cosmos_from_source.cmake)
+
+add_executable(myapp src/main.cpp)
+target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
+```
+
+### Layer reference
+
+| If your project needs… | Include this cmake chain file |
+|---|---|
+| Agent framework, physics, propagation | `agent/cmake/use_cosmos_from_source.cmake` |
+| Orbital mechanics only (no agent) | `simulator/cmake/use_cosmos_from_source.cmake` |
+| Networking, file transfer, hardware drivers | `micro-agent/cmake/use_cosmos_from_source.cmake` |
+| Math, time, JSON, serial only | `kernel/cmake/use_cosmos_from_source.cmake` |
+| Pluggable modules (file/websocket/propagator) | `modules/cmake/use_cosmos_from_source.cmake` |
+| Ground station hardware | `ground-station/cmake/use_cosmos_from_source.cmake` |
+
+### 3. Updating COSMOSv5
+
+```bash
+git submodule update --remote deps/cosmosv5
+git add deps/cosmosv5
+git commit -m "update cosmosv5 to latest"
+```
 
 ---
 
@@ -102,13 +124,6 @@ git submodule update --init --recursive
 * 📘 [COSMOS Core API (Doxygen)](https://hsfl.github.io/cosmos-core)
 * 📐 [Library Hierarchy & Architecture](cosmos_v5_library_hierarchy.md)
 
-These resources describe:
-
-* Library APIs and CMake target reference
-* Agent architecture and message formats
-* Build instructions for supported platforms
-* Tutorials and example programs
-
 ---
 
 ## Released Versions
@@ -116,16 +131,12 @@ These resources describe:
 | Version | Mission / Context | Year | Description |
 |--------:|------------------|------|-------------|
 | **v3.0** | HyTI | 2024 | Significant growth in capabilities driven by thermal infrared mission requirements |
-| **v4.1** | Swarm | 2025 | Enhancements supporting multi-node and spacecraft swarm-style operations |
+| **v4.1** | Swarm | 2025 | Enhancements supporting multi-node and spacecraft swarm-first operations |
 | **v4.2** | Maintenance | Jan 2026 | Major cleanup: repository organization, configuration control, improved onboarding |
 | **v4.3** | HyTI-2 | Spring 2026 | Mission-driven updates validated through flight and integrated testing |
 | **v5.0** | Architecture split | Fall 2026 | Seven-repository layered architecture; breaking change from monolithic core |
 
 ---
 
-## Relevant Links
-
 * [COSMOS Documentation](https://hsfl.github.io/cosmos-docs/)
-* [COSMOS Core API (Doxygen)](https://hsfl.github.io/cosmos-core)
-* [Getting Started](https://hsfl.github.io/cosmos-docs/pages/2-getting_started/index.html)
 * [Hawaii Space Flight Laboratory](https://www.hsfl.hawaii.edu/)
