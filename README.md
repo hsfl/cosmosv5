@@ -46,7 +46,7 @@ This delivers all seven layers in a flat directory tree — one checkout each, n
 ```bash
 mkdir build && cd build
 cmake ..
-cmake --build . -j$(nproc)
+cmake --build . -j`nproc`
 ```
 
 ### Build up to a specific layer
@@ -56,7 +56,7 @@ To build only what you need, target specific libraries or programs:
 ```bash
 mkdir build && cd build
 cmake ..
-cmake --build . --target CosmosAgent propagatorv3 -j$(nproc)
+cmake --build . --target CosmosAgent propagatorv3 -j`nproc`
 ```
 
 CMake builds only the requested targets and their dependencies — lower layers compile
