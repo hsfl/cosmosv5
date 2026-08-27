@@ -41,26 +41,28 @@ cd cosmosv5
 
 This delivers all seven layers in a flat directory tree — one checkout each, no duplication.
 
-### Build everything
+### Build and install all programs
 
 ```bash
 mkdir build && cd build
-cmake ..
+cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/install
 cmake --build . -j`nproc`
+cmake --install .
 ```
 
-### Build up to a specific layer
+Binaries are installed to `CMAKE_INSTALL_PREFIX/bin/`. If `-DCMAKE_INSTALL_PREFIX` is omitted
+it defaults to `/home2/pilger/cosmos` on this machine — set it to wherever you want binaries
+to land.
 
-To build only what you need, target specific libraries or programs:
+### Build a specific program
+
+To build one program and its dependencies only:
 
 ```bash
 mkdir build && cd build
 cmake ..
-cmake --build . --target CosmosAgent propagatorv3 -j`nproc`
+cmake --build . --target propagatorv3 -j`nproc`
 ```
-
-CMake builds only the requested targets and their dependencies — lower layers compile
-automatically, upper layers are skipped.
 
 ### Prerequisites
 
