@@ -1,5 +1,15 @@
-# Ignore everything — this repo only tracks the landing page files
+# Ignore everything — this repo only tracks the landing page files and workspace files
 *
 !.gitignore
 !README.md
 !cosmos_v5_library_hierarchy.md
+!CMakeLists.txt
+!USE_IN_PROJECT.md
+!.gitmodules
+!thirdparty
+!kernel
+!micro-agent
+!simulator
+!agent
+!modules
+!ground-station

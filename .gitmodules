@@ -1,0 +1,21 @@
+[submodule "thirdparty"]
+	path = thirdparty
+	url = https://github.com/hsfl/cosmosv5-thirdparty.git
+[submodule "kernel"]
+	path = kernel
+	url = https://github.com/hsfl/cosmosv5-kernel.git
+[submodule "micro-agent"]
+	path = micro-agent
+	url = https://github.com/hsfl/cosmosv5-micro-agent.git
+[submodule "simulator"]
+	path = simulator
+	url = https://github.com/hsfl/cosmosv5-simulator.git
+[submodule "agent"]
+	path = agent
+	url = https://github.com/hsfl/cosmosv5-agent.git
+[submodule "modules"]
+	path = modules
+	url = https://github.com/hsfl/cosmosv5-modules.git
+[submodule "ground-station"]
+	path = ground-station
+	url = https://github.com/hsfl/cosmosv5-ground-station.git
