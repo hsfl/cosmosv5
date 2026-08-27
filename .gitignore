@@ -1,0 +1,5 @@
+# Ignore everything — this repo only tracks the landing page files
+*
+!.gitignore
+!README.md
+!cosmos_v5_library_hierarchy.md
