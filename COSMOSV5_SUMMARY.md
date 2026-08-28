@@ -17,7 +17,7 @@ as top-level git submodules. Users clone one repo and get the full stack.
 ```
 cosmosv5/
   thirdparty/      → hsfl/cosmosv5-thirdparty
-  kernel/          → hsfl/cosmosv5-micro-agent
+  kernel/          → hsfl/cosmosv5-kernel
   micro-agent/     → hsfl/cosmosv5-micro-agent
   simulator/       → hsfl/cosmosv5-simulator
   agent/           → hsfl/cosmosv5-agent
@@ -149,8 +149,17 @@ Each layer exposes `cmake/use_cosmos_from_source.cmake`. The pattern in every fi
 
 ---
 
-## Open Items
+## Release History
 
-- Tag/semver release strategy: tag each of the 8 repos (`cosmosv5` + 7 layers) at
-  a consistent point to allow downstream projects to pin to a release rather than
-  a commit hash.
+| Version | Date | Notes |
+|---------|------|-------|
+| v5.0.0 | 2026-08-27 | Initial release of the seven-repository flat workspace architecture |
+
+All 8 repos (`cosmosv5` + 7 layers) are tagged and have a published GitHub release at `v5.0.0`.
+
+### Post-tag fix included in v5.0.0
+
+`EVENT_TYPE_EARTH (0x1240)` and `EVENT_TYPE_MOON (0x1280)` were found missing from
+`kernel/libraries/support/cosmos-defs.h` (present in cosmos-core but not carried over
+in the initial split). The fix was committed and the kernel `v5.0.0` tag was moved to
+include it before the release was published.
