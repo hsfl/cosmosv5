@@ -45,13 +45,13 @@ This delivers all seven layers in a flat directory tree — one checkout each, n
 
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake .. -DCMAKE_INSTALL_PREFIX=~/cosmos
 cmake --build . -j`nproc`
 cmake --install .
 ```
 
-Binaries are installed to `CMAKE_INSTALL_PREFIX/bin/`. If `-DCMAKE_INSTALL_PREFIX` is omitted
-it defaults to `~/cosmos` — set it to wherever you want binaries to land.
+Binaries are installed to `<prefix>/bin/` — so `-DCMAKE_INSTALL_PREFIX=~/cosmos` puts them in
+`~/cosmos/bin/`. If `-DCMAKE_INSTALL_PREFIX` is omitted it defaults to `~/cosmos`.
 
 ### Build a specific program
 
