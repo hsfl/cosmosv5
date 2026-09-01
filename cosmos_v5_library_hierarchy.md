@@ -3,11 +3,11 @@
 ## 1. Overview
 
 COSMOS v4 splits the monolithic `core` repository into seven separate repositories,
-each a subdirectory of `/home2/pilger/cosmos/src/`. Each repo is independently
+each a subdirectory of `~/cosmos/src/`. Each repo is independently
 buildable and depends only on repos below it in the chain.
 
 **CMake strategy:** Each repo exposes `cmake/use_cosmos_from_source.cmake` which
-chains to the repo below it. A project sets `COSMOS_SOURCE=/home2/pilger/cosmos/src`
+chains to the repo below it. A project sets `COSMOS_SOURCE=~/cosmos/src`
 and includes the cmake file for the deepest layer it needs.
 
 **Build chain:**
@@ -15,7 +15,7 @@ and includes the cmake file for the deepest layer it needs.
 thirdparty → kernel → micro-agent → simulator → agent → modules → ground-station
 ```
 
-**Install prefix:** `/home2/pilger/cosmos` (set via `CMAKE_INSTALL_PREFIX` in each
+**Install prefix:** `~/cosmos` (set via `CMAKE_INSTALL_PREFIX` in each
 repo's CMakeLists.txt). Binaries install to `bin/`; library install calls removed
 (static libs stay in build tree, not installed).
 

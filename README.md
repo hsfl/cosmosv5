@@ -51,8 +51,7 @@ cmake --install .
 ```
 
 Binaries are installed to `CMAKE_INSTALL_PREFIX/bin/`. If `-DCMAKE_INSTALL_PREFIX` is omitted
-it defaults to `/home2/pilger/cosmos` on this machine — set it to wherever you want binaries
-to land.
+it defaults to `~/cosmos` — set it to wherever you want binaries to land.
 
 ### Build a specific program
 

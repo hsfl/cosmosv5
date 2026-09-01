@@ -12,7 +12,7 @@ set(COSMOS_SOURCE "${CMAKE_SOURCE_DIR}" CACHE PATH "COSMOSv5 workspace root")
 set(COSMOS_LIBS pthread)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/home2/pilger/cosmos" CACHE PATH "Install prefix" FORCE)
+    set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/cosmos" CACHE PATH "Install prefix" FORCE)
 endif()
 
 # Build all libraries via the cmake chain.
