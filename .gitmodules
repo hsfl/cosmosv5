@@ -21,4 +21,4 @@
 	url = https://github.com/hsfl/cosmosv5-ground-station.git
 [submodule "resources"]
 	path = resources
-	url = /home2/pilger/cosmos/src/cosmosv5-resources
+	url = https://github.com/hsfl/cosmosv5-resources.git
