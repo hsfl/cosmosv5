@@ -28,3 +28,8 @@ add_subdirectory(simulator/programs       ${CMAKE_BINARY_DIR}/simulator/programs
 add_subdirectory(agent/programs           ${CMAKE_BINARY_DIR}/agent/programs)
 add_subdirectory(modules/programs         ${CMAKE_BINARY_DIR}/modules/programs)
 add_subdirectory(ground-station/programs  ${CMAKE_BINARY_DIR}/ground-station/programs)
+
+# Install resource files to ${CMAKE_INSTALL_PREFIX}/resources/
+if(EXISTS "${CMAKE_SOURCE_DIR}/resources/general")
+    install(DIRECTORY resources/general DESTINATION resources)
+endif()
