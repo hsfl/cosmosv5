@@ -28,16 +28,32 @@ thirdparty(-1) → kernel(0) → micro-agent(1) → simulator(2) → agent(3) �
 
 ---
 
-## Build
+## Clone and Build
+
+### Selective submodule init (do NOT use --recurse-submodules)
 
 ```bash
-git clone --recurse-submodules https://github.com/hsfl/cosmosv5.git
+git clone https://github.com/hsfl/cosmosv5.git
 cd cosmosv5
+./setup.sh agent          # init thirdparty+kernel+micro-agent+simulator+agent
+./setup.sh all            # also includes resources (~21 MB physics data files)
+```
+
+`setup.bat` is the Windows equivalent. Resources are excluded by default (`update = none` in `.gitmodules`).
+
+### Build
+
+```bash
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/cosmos
-cmake --build . -j`nproc`                         # all programs
+cmake --build . -j`nproc`                         # all programs for top layer
 cmake --build . --target propagatorv3 -j`nproc`   # specific target
-cmake --install .
+cmake --install .                                  # also installs resources/ if present
+```
+
+To build only up to a specific layer (cmake auto-inits missing submodules below it):
+```bash
+cmake .. -DCOSMOS_TOP_LAYER=micro-agent
 ```
 
 `CMAKE_INSTALL_PREFIX` is the root (e.g. `$HOME/cosmos`); binaries install to `$prefix/bin/`.
@@ -49,7 +65,8 @@ cmake --install .
 
 ```bash
 git submodule add https://github.com/hsfl/cosmosv5.git deps/cosmosv5
-git submodule update --init --recursive
+git submodule update --init deps/cosmosv5
+cd deps/cosmosv5 && ./setup.sh agent && cd ../..
 ```
 
 ```cmake
