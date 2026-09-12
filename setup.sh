@@ -10,9 +10,9 @@ LAYER="${1:-agent}"
 
 case "$LAYER" in
     kernel)          MODULES="kernel" ;;
-    micro-agent)     MODULES="thirdparty kernel micro-agent" ;;
-    simulator)       MODULES="thirdparty kernel micro-agent simulator" ;;
-    agent)           MODULES="thirdparty kernel micro-agent simulator agent" ;;
+    micro-agent)     MODULES="kernel micro-agent" ;;
+    simulator)       MODULES="kernel micro-agent simulator" ;;
+    agent)           MODULES="kernel micro-agent simulator agent" ;;
     modules)         MODULES="thirdparty kernel micro-agent simulator agent modules" ;;
     ground-station)  MODULES="thirdparty kernel micro-agent simulator agent modules ground-station" ;;
     all)             MODULES="thirdparty kernel micro-agent simulator agent modules ground-station resources" ;;

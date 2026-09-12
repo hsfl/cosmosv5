@@ -8,9 +8,9 @@ if "%LAYER%"=="" set LAYER=agent
 
 set MODULES=
 if "%LAYER%"=="kernel"         set MODULES=kernel
-if "%LAYER%"=="micro-agent"    set MODULES=thirdparty kernel micro-agent
-if "%LAYER%"=="simulator"      set MODULES=thirdparty kernel micro-agent simulator
-if "%LAYER%"=="agent"          set MODULES=thirdparty kernel micro-agent simulator agent
+if "%LAYER%"=="micro-agent"    set MODULES=kernel micro-agent
+if "%LAYER%"=="simulator"      set MODULES=kernel micro-agent simulator
+if "%LAYER%"=="agent"          set MODULES=kernel micro-agent simulator agent
 if "%LAYER%"=="modules"        set MODULES=thirdparty kernel micro-agent simulator agent modules
 if "%LAYER%"=="ground-station" set MODULES=thirdparty kernel micro-agent simulator agent modules ground-station
 if "%LAYER%"=="all"            set MODULES=thirdparty kernel micro-agent simulator agent modules ground-station resources
