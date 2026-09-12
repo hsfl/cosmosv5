@@ -76,8 +76,8 @@ After building, `cmake --install` copies `resources/general/` to
 `COSMOS` or `COSMOSRESOURCES` environment variable, or the default
 `/usr/local/cosmos/resources`.
 
-> **Note:** `wmm_2020.cof` is not yet included in the resources repo. Simulations
-> using dates after 2020-01-01 will fail to load the magnetic model.
+> **Note:** `wmm_2025.cof` is not yet included in the resources repo. Simulations
+> using dates after 2025-01-01 will fail to load the magnetic model.
 
 ---
 
