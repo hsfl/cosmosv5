@@ -1,23 +1,30 @@
-# COSMOS v4 — Library Dependency Hierarchy
+# COSMOS v5 — Library Dependency Hierarchy
 
 ## 1. Overview
 
-COSMOS v4 splits the monolithic `core` repository into seven separate repositories,
-each a subdirectory of `~/cosmos/src/`. Each repo is independently
-buildable and depends only on repos below it in the chain.
+COSMOS v5.0 distributes its code across seven layer repositories plus a resources
+repository and an optional thirdparty repository. All repos live as flat submodules
+of the `hsfl/cosmosv5` workspace. Each layer is independently buildable and depends
+only on layers below it in the chain.
 
-**CMake strategy:** Each repo exposes `cmake/use_cosmos_from_source.cmake` which
-chains to the repo below it. A project sets `COSMOS_SOURCE=~/cosmos/src`
-and includes the cmake file for the deepest layer it needs.
+**CMake strategy:** Each layer exposes `cmake/use_cosmos_from_source.cmake` which
+chains to the layer below it. A project sets `COSMOS_SOURCE` to the workspace root
+and includes the cmake file for the highest layer it needs. Missing lower-layer
+submodules are auto-initialized at cmake configure time.
 
 **Build chain:**
 ```
-thirdparty → kernel → micro-agent → simulator → agent → modules → ground-station
+kernel → micro-agent → simulator → agent → modules → ground-station
+                                                ↑
+                                      thirdparty (jpeg, png — optional, modules and above)
 ```
 
-**Install prefix:** `~/cosmos` (set via `CMAKE_INSTALL_PREFIX` in each
-repo's CMakeLists.txt). Binaries install to `bin/`; library install calls removed
-(static libs stay in build tree, not installed).
+`json11` is bundled in `kernel/libraries/json11/` (MIT license).
+`zlib` is bundled in `micro-agent/libraries/zlib/` (zlib license).
+`thirdparty` provides only `localjpeg` and `localpng`.
+
+**Install prefix:** `~/cosmos` (default via `CMAKE_INSTALL_PREFIX`). Binaries
+install to `$prefix/bin/`; resource files to `$prefix/resources/general/`.
 
 ---
 
@@ -29,6 +36,10 @@ Layer 5 │ GROUND-STATION   gs232b_lib  ic9100_lib  kisslib  kisstnc_lib
         │ (hardware)        kpc9612p_lib  mixwtnc_lib  prkx2su_class  prkx2su_lib
         │                   ts2000_lib  unixgpio  usrp_lib  netradio
 ════════╪═══════════════════════════════════════════════════════════════════════
+        │                            ┌─────────────────────────────────────────
+        │                            │ THIRDPARTY (opt)  localjpeg  localpng
+        │                            │ (pulled in by modules cmake chain)
+        │                            └─────────────────────────────────────────
         │                                                     ● MODULES
 Layer 4 │ MODULES           file_module  websocket_module
         │                   packethandler_module  node_propagator_module
@@ -53,6 +64,7 @@ Layer 2 │ SIMULATOR         nrlmsise-00  nrlmsise-00_data  controllib
 Layer 1 │ MICRO-AGENT       datalib  socketlib  logger  transferlib
         │ (data/network)    devicecpu
         │                   cssl_lib  arduino_lib  bbFctns  pic_lib
+        │                   zlib *(bundled)*
 ════════╪═══════════════════════════════════════════════════════════════════════
         │                                                     ● KERNEL
 Layer 0 │ KERNEL            math/* (bytelib crclib mathlib matrix vector rotation)
@@ -62,31 +74,34 @@ Layer 0 │ KERNEL            math/* (bytelib crclib mathlib matrix vector rotat
         │                   jsonclass  jsonobject  jsonvalue  check  convertdef
         │                   ax25class  packetcomm  channellib
         │                   devicedisk  i2c  serialclass
-════════╪═══════════════════════════════════════════════════════════════════════
-        │                                                     ● THIRDPARTY
-Layer-1 │ THIRDPARTY        json11  zlib  jpeg  png
+        │                   json11 *(bundled)*
 ```
 
 ---
 
 ## 3. Repository Contents
 
-### Layer -1 — `thirdparty/`
-No COSMOS dependencies. Pure third-party C/C++ libraries.
+### Layer -1 — `thirdparty/` *(optional, modules and above)*
+No COSMOS dependencies. Provides image codec libraries only.
+`json11` has moved to `kernel`; `zlib` has moved to `micro-agent`.
 
 | Library | CMake target | Notes |
 |---------|-------------|-------|
-| json11 | `json11` | Removed gratuitous `configCosmos.h` dep; STL includes uncommented; `using` declarations added |
-| zlib | `localzlib` | Internal `"thirdparty/zlib/zlib.h"` includes patched to `"zlib.h"` in 4 files |
 | jpeg | `localjpeg` | |
-| png | `localpng` | |
+| png | `localpng` | Requires `COSMOS_ZLIB_INCLUDE_DIR` (set by micro-agent's cmake chain) |
 
 **Programs:** none
+
+> `thirdparty` is included automatically by `modules`' cmake chain. It is not
+> needed for `kernel`, `micro-agent`, `simulator`, or `agent`.
 
 ---
 
 ### Layer 0 — `kernel/`
-No dependency on `get_cosmosresources()`. Safe for bare embedded targets.
+No dependency on `get_cosmosresources()`. No thirdparty dependency. Safe for bare
+embedded targets. `json11` is bundled directly in `libraries/json11/` (MIT license).
+
+**Bundled** (`libraries/json11/`): json11 (MIT license — copyright notice preserved)
 
 **Math** (`libraries/math/`):
 bytelib, crclib, mathlib, matrix, vector, rotation
@@ -108,11 +123,12 @@ devicedisk (`device/disk/`), i2c + i2c.cpp (`device/i2c/`), serialclass (`device
 
 | CMake target | Libraries |
 |---|---|
+| `json11` | json11 *(bundled)* |
 | CosmosMath | bytelib, crclib, mathlib, matrix, vector, rotation |
 | CosmosSupport | configCosmos, configCosmosKernel, cosmos-errno, cosmos-errclass, cosmos-defs |
 | CosmosSlip | sliplib |
 | CosmosPrint | print_utils |
-| CosmosString | stringlib, jsonobject, jsonvalue |
+| CosmosString | stringlib, jsonobject, jsonvalue (links json11) |
 | CosmosJson | jsonclass |
 | CosmosTime | timelib, timeutils, elapsedtime |
 | CosmosPacket | packetcomm, ax25class |
@@ -129,10 +145,14 @@ devicedisk (`device/disk/`), i2c + i2c.cpp (`device/i2c/`), serialclass (`device
 ---
 
 ### Layer 1 — `micro-agent/`
-Adds data I/O, networking, and lightweight hardware drivers.
+Adds data I/O, networking, and lightweight hardware drivers. No thirdparty
+dependency. `zlib` is bundled directly in `libraries/zlib/` (zlib license).
+Sets `COSMOS_ZLIB_INCLUDE_DIR` in its cmake chain for use by `localpng`.
+
+**Bundled** (`libraries/zlib/`): zlib (zlib license — copyright notice preserved)
 
 **Support** (`libraries/support/`):
-datalib (zlib include patched), socketlib, logger, transferlib
+datalib, socketlib, logger, transferlib
 
 **Devices**:
 devicecpu (`device/cpu/`), cssl_lib + bbFctns + pic_lib (`device/general/`),
@@ -142,7 +162,8 @@ arduino_lib (`device/arduino/`)
 
 | CMake target | Libraries |
 |---|---|
-| CosmosData | datalib |
+| `localzlib` | zlib *(bundled)* |
+| CosmosData | datalib (links localzlib) |
 | CosmosNetwork | socketlib |
 | CosmosLog | logger |
 | CosmosTransferLib | transferlib |
@@ -241,7 +262,8 @@ gige_lib, acq_a35
 ### Layer 4 — `modules/`
 The four agent capability modules, extracted into their own repo so downstream
 projects can take only the modules they need without pulling in all of agent's
-transitive program dependencies.
+transitive program dependencies. The modules cmake chain automatically includes
+`thirdparty` (for `localjpeg` and `localpng`) after the agent chain.
 
 **Libraries** (`libraries/module/`):
 file_module, websocket_module, packethandler_module, node_propagator_module
@@ -287,16 +309,21 @@ netradio
 
 ## 4. Dependency Matrix
 
+Columns: T=thirdparty, K=kernel, M=micro-agent, S=simulator, A=agent, Mod=modules, G=ground-station
+
 ```
-         T   K   M   S   A  Mod  G
-T        —
-K        ✓   —
-M        ✓   ✓   —
-S        ✓   ✓   ✓   —
-A        ✓   ✓   ✓   ✓   —
-Mod      ✓   ✓   ✓   ✓   ✓   —
-G        ✓   ✓   ✓   ✓   ✓   ✓   —
+         K   M   S   A  Mod  G   T
+K        —
+M        ✓   —
+S        ✓   ✓   —
+A        ✓   ✓   ✓   —
+Mod      ✓   ✓   ✓   ✓   —       ✓
+G        ✓   ✓   ✓   ✓   ✓   —   ✓
+T        —                           (jpeg/png only — no COSMOS deps)
 ```
+
+`thirdparty` is pulled in by `modules` and `ground-station` for jpeg/png.
+`kernel` and `micro-agent` have no thirdparty dependency (json11 and zlib are bundled).
 
 ---
 
@@ -311,27 +338,30 @@ G        ✓   ✓   ✓   ✓   ✓   ✓   —
 | #82 | Introduce `timebase.h` to fix elapsedtime→timelib layering violation | kernel |
 | #83 | Merge `configCosmosKernel.h` into `configCosmos.h` | kernel |
 | #84 | Replace `cssl_lib` with `serialclass` and eliminate `cssl_lib` | micro-agent |
+| #85 | ~~Bundle json11 in kernel; remove thirdparty as kernel dependency~~ | ✅ kernel |
+| #86 | ~~Bundle zlib in micro-agent; remove thirdparty as micro-agent dependency~~ | ✅ micro-agent |
+| #87 | ~~Reduce thirdparty to localjpeg+localpng only; update setup.sh~~ | ✅ thirdparty |
+| — | `wmm_2025.cof` missing from resources — geomag fails for dates after 2025-01-01 | resources |
 
 ---
 
 ## 6. Key Architectural Decisions
 
-- **7 repos, not 6**: `modules` added between agent and ground-station so the four
-  capability modules (file, websocket, packethandler, propagator) are independently
-  consumable without pulling in ground-station hardware deps.
-- **Chain order**: simulator is BELOW agent. `physicsclass`/`simulatorclass` include
-  `jsonlib.h` at the header level, so they must live above the namespace layer.
-- **convertlib in agent**: `convertlib.cpp` uses `JSON_TYPE_*` from `jsondef.h`
-  and implements `json_out_*` declared in `jsonlib.h`. Cannot compile below namespace.
+- **9 repos total**: 7 layers + `thirdparty` (optional, upper layers only) + `resources` (physics data files, opt-in).
+- **`modules` added between agent and ground-station** so the four capability modules are independently consumable without pulling in ground-station hardware deps.
+- **`json11` bundled in kernel**: kernel has no external dependencies. json11 (MIT) lives in `kernel/libraries/json11/`. Copyright notice preserved.
+- **`zlib` bundled in micro-agent**: micro-agent has no thirdparty dependency. zlib lives in `micro-agent/libraries/zlib/`. Sets `COSMOS_ZLIB_INCLUDE_DIR` for `localpng`.
+- **`thirdparty` provides only jpeg/png**: included automatically by the `modules` cmake chain. Not needed for kernel, micro-agent, simulator, or agent.
+- **Chain order**: simulator is BELOW agent. `physicsclass`/`simulatorclass` include `jsonlib.h` at the header level, so they must live above the namespace layer.
+- **`convertlib` in agent**: `convertlib.cpp` uses `JSON_TYPE_*` from `jsondef.h` and implements `json_out_*` declared in `jsonlib.h`. Cannot compile below namespace.
 - **Earth geometry constants** (`REARTHM` etc.) added to `convertdef.h` (kernel).
-- **CosmosPhysics links CosmosEnum**: `physicsclass.cpp` uses the Enum class directly.
-- **CosmosSimulator must be explicit**: programs calling `Physics::Simulator::` methods
-  must list `CosmosSimulator` in `target_link_libraries` — it does not propagate automatically.
-- **CosmosDeviceI2C links CosmosTime**: `i2c.cpp` uses `ElapsedTime` / `microsleep`.
-- **agent_file → modules**: includes `file_module.h` so must live at or above modules layer.
+- **`CosmosPhysics` links `CosmosEnum`**: `physicsclass.cpp` uses the Enum class directly.
+- **`CosmosSimulator` must be explicit**: programs calling `Physics::Simulator::` methods must list `CosmosSimulator` in `target_link_libraries` — it does not propagate automatically.
+- **`CosmosDeviceI2C` links `CosmosTime`**: `i2c.cpp` uses `ElapsedTime` / `microsleep`.
+- **`agent_file` → modules**: includes `file_module.h` so must live at or above modules layer.
 - **Ground-station agents** (add_radio, agent_antenna, etc.) live in ground-station, not agent.
-- **agent_transmitter/transmitter2** use `kisslib.h` → ground-station.
-- **track_sband (general)**: pre-existing device API bug (`.ant` vs `->ant`); skipped.
-- **zlib includes in programs**: `"thirdparty/zlib/zlib.h"` → `"zlib.h"` patched in archive.cpp, latest_file.cpp, and others.
+- **`agent_transmitter`/`transmitter2`** use `kisslib.h` → ground-station.
+- **`track_sband` (general)**: pre-existing device API bug (`.ant` vs `->ant`); skipped.
 - **gtest**: not installed on viirs; two tests skipped with `find_package(GTest QUIET)` guard.
-- **`core/` untouched**: all source files copied (not moved) from core to the new repos.
+- **Source files copied, not moved**: all source files copied from cosmos-core to the new repos at the v5.0 split.
+- **Resources**: physics data files live in `hsfl/cosmosv5-resources` (`resources/` submodule, `update = none`). Required by simulator-layer programs at runtime. `cmake --install` deploys them to `$prefix/resources/general/`.
