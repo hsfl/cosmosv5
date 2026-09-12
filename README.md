@@ -8,8 +8,8 @@ robotic systems, including CubeSats, UAVs, and ground stations.
 
 ## v5.0 Repository Architecture
 
-COSMOS v5.0 distributes its code across seven independently versioned repositories arranged in
-a strict dependency chain:
+COSMOS v5.0 distributes its code across seven independently versioned layer repositories
+arranged in a strict dependency chain, plus a resources repository for physics data files:
 
 ```
 thirdparty → kernel → micro-agent → simulator → agent → modules → ground-station
@@ -24,9 +24,10 @@ thirdparty → kernel → micro-agent → simulator → agent → modules → gr
 |  3 | [cosmosv5-agent](https://github.com/hsfl/cosmosv5-agent) | Full COSMOS namespace, physics simulation, agent framework |
 |  4 | [cosmosv5-modules](https://github.com/hsfl/cosmosv5-modules) | Pluggable agent capability modules (file, websocket, packet handler, propagator) |
 |  5 | [cosmosv5-ground-station](https://github.com/hsfl/cosmosv5-ground-station) | Ground-station hardware drivers and agents |
+| data | [cosmosv5-resources](https://github.com/hsfl/cosmosv5-resources) | Physics data files: gravitational models, JPL ephemeris, IERS data, WMM |
 
-This **workspace repository** (`cosmosv5`) contains all seven layers as flat submodules and is
-the standard entry point for building and developing COSMOS.
+This **workspace repository** (`cosmosv5`) contains all seven layers and the resources repo
+as flat submodules and is the standard entry point for building and developing COSMOS.
 
 ---
 
@@ -133,6 +134,8 @@ git commit -m "update cosmosv5 to latest"
 * 📗 [User and Developer Documentation](https://hsfl.github.io/cosmos-docs/)
 * 📘 [COSMOS Core API (Doxygen)](https://hsfl.github.io/cosmos-core)
 * 📐 [Library Hierarchy & Architecture](cosmos_v5_library_hierarchy.md)
+* 🗂️ [Workspace Architecture & Build Reference](COSMOSV5_WORKSPACE.md)
+* 📋 [Migration Summary & Change History](COSMOSV5_SUMMARY.md)
 
 ---
 
