@@ -162,6 +162,7 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 | # | Description | Layer |
 |---|-------------|-------|
 | — | `wmm_2025.cof` missing from resources — simulations after 2025-01-01 fail to load the magnetic model | `cosmosv5-resources` |
+| — | GCC 15: `zlib`, `localjpeg`, `localpng` may need `#include <cstdint>` — will surface when building modules/ground-station (json11 already fixed) | `cosmosv5-thirdparty`, `cosmosv5-micro-agent` |
 | #82 | Introduce `timebase.h` to fix `elapsedtime`→`timelib` layering violation | kernel |
 | #83 | Merge `configCosmosKernel.h` into `configCosmos.h` | kernel |
 | #84 | Replace `cssl_lib` with `serialclass` and eliminate `cssl_lib` | micro-agent |
