@@ -70,7 +70,7 @@ cd cosmosv5
 ./setup.sh all            # also includes resources (~21 MB physics data files)
 ```
 
-`setup.bat` is the Windows equivalent. Resources are excluded by default (`update = none` in `.gitmodules`).
+`setup.bat` is the Windows equivalent. Resources are excluded by default (`update = none` in `.gitmodules`). `setup.sh all` handles this with `git -c submodule.resources.update=checkout submodule update --init resources` — plain `git submodule update --init resources` is silently skipped.
 
 ### Build
 

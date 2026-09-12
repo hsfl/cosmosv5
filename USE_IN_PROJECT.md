@@ -74,7 +74,7 @@ files at runtime. These are not part of any layer repo — they live in the sepa
 To include them in your project:
 
 ```bash
-git -C deps/cosmosv5 submodule update --init resources
+git -C deps/cosmosv5 -c submodule.resources.update=checkout submodule update --init resources
 ```
 
 Then install them alongside your project's binaries so the runtime can find them.

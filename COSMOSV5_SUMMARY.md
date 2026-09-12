@@ -225,7 +225,7 @@ data files required to run propagation programs:
 - `general/yalebsc.txt` — Yale Bright Star Catalog
 
 The submodule is marked `update = none` and is **not** initialized by default.
-Use `./setup.sh all` or `git submodule update --init resources` to get it.
+Use `./setup.sh all` or `git -c submodule.resources.update=checkout submodule update --init resources` to get it. (Plain `git submodule update --init resources` is silently skipped because of `update = none`.)
 `cmake --install` copies it to `${CMAKE_INSTALL_PREFIX}/resources/general/`.
 
 #### Selective layer initialization (`setup.sh` / `setup.bat`)

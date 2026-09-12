@@ -78,7 +78,7 @@ cmake .. -DCOSMOS_TOP_LAYER=micro-agent
 * CMake 3.20+
 * A C++11-capable compiler (GCC 9+, Clang 10+)
 * Git (for submodule auto-initialization during cmake configure)
-* Physics/propagation programs additionally require resource files — initialize with `./setup.sh all` or `git submodule update --init resources`, then `cmake --install` to deploy them.
+* Physics/propagation programs additionally require resource files — initialize with `./setup.sh all` or `git -c submodule.resources.update=checkout submodule update --init resources`, then `cmake --install` to deploy them. (The `-c` flag is required because `resources` is marked `update = none` to prevent accidental pulls.)
 
 ---
 

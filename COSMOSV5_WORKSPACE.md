@@ -69,8 +69,8 @@ initialized automatically. To get it:
 
 ```bash
 ./setup.sh all
-# or
-git submodule update --init resources
+# or directly (the -c flag overrides update=none):
+git -c submodule.resources.update=checkout submodule update --init resources
 ```
 
 After building, `cmake --install` copies `resources/general/` to
