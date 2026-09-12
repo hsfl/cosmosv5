@@ -216,15 +216,12 @@ data files required to run propagation programs:
 - `general/pgm2000a_coef.txt` — PGM2000A gravitational model
 - `general/iers_pm_dut_ls.txt` — IERS Earth orientation parameters
 - `general/lnx1900.405` — JPL Development Ephemeris DE405
-- `general/wmm_2005/2010/2015.cof` — World Magnetic Model epochs
+- `general/wmm_2005/2010/2015/2020.cof` — World Magnetic Model epochs
 - `general/yalebsc.txt` — Yale Bright Star Catalog
 
 The submodule is marked `update = none` and is **not** initialized by default.
 Use `./setup.sh all` or `git submodule update --init resources` to get it.
 `cmake --install` copies it to `${CMAKE_INSTALL_PREFIX}/resources/general/`.
-
-Note: `wmm_2020.cof` is not yet included; simulations using dates after 2020-01-01
-will fail to load the magnetic model until that file is added.
 
 #### Selective layer initialization (`setup.sh` / `setup.bat`)
 
@@ -270,3 +267,14 @@ even on a shallow workspace clone — cmake fetches the required layers itself.
 `kernel/libraries/support/cosmos-defs.h` (present in cosmos-core but not carried over
 in the initial split). The fix was committed and the kernel `v5.0.0` tag was moved to
 include it before the release was published.
+
+---
+
+## Open Issues
+
+| # | Description | Layer / Repo |
+|---|-------------|--------------|
+| — | `wmm_2025.cof` not yet included in resources — simulations using dates after 2025-01-01 will fail to load the magnetic model | `cosmosv5-resources` |
+| #82 | Introduce `timebase.h` to fix `elapsedtime`→`timelib` layering violation | `cosmosv5-kernel` |
+| #83 | Merge `configCosmosKernel.h` into `configCosmos.h` | `cosmosv5-kernel` |
+| #84 | Replace `cssl_lib` with `serialclass` and eliminate `cssl_lib` | `cosmosv5-micro-agent` |
