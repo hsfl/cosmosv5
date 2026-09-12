@@ -35,7 +35,7 @@ workspace and use the setup script to initialize only the layers required:
 ```bash
 git clone https://github.com/hsfl/cosmosv5.git
 cd cosmosv5
-./setup.sh agent          # thirdparty + kernel + micro-agent + simulator + agent
+./setup.sh agent          # kernel + micro-agent + simulator + agent
 ```
 
 On Windows use `setup.bat` instead of `./setup.sh`.
@@ -44,18 +44,20 @@ On Windows use `setup.bat` instead of `./setup.sh`.
 
 | Argument | Submodules initialized |
 |---|---|
-| `kernel` | thirdparty, kernel |
-| `micro-agent` | thirdparty, kernel, micro-agent |
-| `simulator` | thirdparty, kernel, micro-agent, simulator |
-| `agent` | thirdparty, kernel, micro-agent, simulator, agent  ← **recommended default** |
-| `modules` | thirdparty … modules |
+| `kernel` | kernel |
+| `micro-agent` | kernel, micro-agent |
+| `simulator` | kernel, micro-agent, simulator |
+| `agent` | kernel, micro-agent, simulator, agent  ← **recommended default** |
+| `modules` | thirdparty, kernel, micro-agent, simulator, agent, modules |
 | `ground-station` | thirdparty … ground-station |
 | `all` | everything including resources (~21 MB physics data files) |
+
+`thirdparty` (jpeg/png) is only needed from `modules` and above.
 
 You can also initialize submodules directly without the script:
 
 ```bash
-git submodule update --init thirdparty kernel micro-agent
+git submodule update --init kernel micro-agent
 ```
 
 ### Resources submodule
@@ -160,8 +162,9 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 - `CMAKE_INSTALL_PREFIX` is the install root (e.g. `~/cosmos`); binaries go to
   `$prefix/bin/`, resources to `$prefix/resources/`
 - Shell on viirs is tcsh — use backtick syntax (`` `nproc` ``), not `$(nproc)`
-- **kernel is now thirdparty-free**: `json11` is bundled directly in `kernel/libraries/json11/`. The `json11` cmake target is defined in kernel unless thirdparty has already been included (e.g. by micro-agent pulling in `localzlib`), in which case thirdparty's copy takes precedence.
-- **micro-agent chains to thirdparty** (for `localzlib`) before chaining to kernel. This is temporary until issue #86 folds `zlib` into micro-agent.
+- **`json11` is bundled in kernel** (`kernel/libraries/json11/`) — MIT license preserved
+- **`zlib` is bundled in micro-agent** (`micro-agent/libraries/zlib/`) — zlib license preserved; sets `COSMOS_ZLIB_INCLUDE_DIR` for libpng
+- **`thirdparty` provides only `localjpeg` and `localpng`**, included automatically from `modules` and above; `localpng` reads `COSMOS_ZLIB_INCLUDE_DIR` set by micro-agent's chain
 
 ---
 
@@ -173,6 +176,6 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 | #82 | Introduce `timebase.h` to fix `elapsedtime`→`timelib` layering violation | `cosmosv5-kernel` |
 | #83 | Merge `configCosmosKernel.h` into `configCosmos.h` | `cosmosv5-kernel` |
 | #84 | Replace `cssl_lib` with `serialclass` and eliminate `cssl_lib` | `cosmosv5-micro-agent` |
-| #85 | ~~Fold `json11` into kernel; remove `thirdparty` as kernel dependency~~ ✅ done | `cosmosv5-kernel` |
-| #86 | Fold `zlib` into micro-agent; remove `thirdparty` as micro-agent dependency | `cosmosv5-micro-agent` |
-| #87 | Reduce `thirdparty` to `localjpeg`+`localpng` only; update setup.sh | `cosmosv5-thirdparty` |
+| #85 | ~~Fold `json11` into kernel; remove `thirdparty` as kernel dependency~~ ✅ | `cosmosv5-kernel` |
+| #86 | ~~Fold `zlib` into micro-agent; remove `thirdparty` as micro-agent dependency~~ ✅ | `cosmosv5-micro-agent` |
+| #87 | ~~Reduce `thirdparty` to `localjpeg`+`localpng` only; update setup.sh~~ ✅ | `cosmosv5-thirdparty` |

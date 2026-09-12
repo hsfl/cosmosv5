@@ -72,21 +72,24 @@ workspace submodule at `cosmosv5/resources/` points to it).
 ## Layer Dependency Chain
 
 ```
-thirdparty → kernel → micro-agent → simulator → agent → modules → ground-station
+kernel → micro-agent → simulator → agent → modules → ground-station
+                                                ↑
+                                           thirdparty (jpeg, png — optional, upper layers only)
 ```
 
-Each layer depends only on the layers below it. The cmake chain is transitive:
-including one layer's cmake file builds the full dependency stack below it.
+Each layer depends only on the layers below it. `json11` is bundled in `kernel`;
+`zlib` is bundled in `micro-agent`. `thirdparty` provides only `localjpeg` and
+`localpng`, included automatically at the `modules` level and above.
 
 | Layer | Use when you need… |
 |-------|-------------------|
-| `thirdparty` | json11, zlib, jpeg, png only |
-| `kernel` | math, time, JSON, serial — no network |
-| `micro-agent` | networking, file transfer, hardware drivers |
+| `kernel` | math, time, JSON (json11 bundled), serial — no network |
+| `micro-agent` | networking, file transfer, hardware drivers (zlib bundled) |
 | `simulator` | orbital mechanics, no agent framework |
 | `agent` | full COSMOS: agents, physics, propagation |
-| `modules` | pluggable modules (file, websocket, propagator) |
+| `modules` | pluggable modules (file, websocket, propagator); pulls in thirdparty (jpeg/png) |
 | `ground-station` | ground station hardware and agents |
+| `thirdparty` | localjpeg, localpng only — included automatically by modules and above |
 
 ---
 
@@ -101,12 +104,14 @@ layers required for your work:
 ```bash
 git clone https://github.com/hsfl/cosmosv5.git
 cd cosmosv5
-./setup.sh agent          # thirdparty + kernel + micro-agent + simulator + agent
-./setup.sh all            # same, plus resources (~21 MB physics data files)
+./setup.sh agent          # kernel + micro-agent + simulator + agent  (no thirdparty needed)
+./setup.sh modules        # adds thirdparty (jpeg/png) + modules
+./setup.sh all            # full stack including resources (~21 MB physics data files)
 ```
 
-`setup.bat` is the Windows equivalent. The resources submodule is marked
-`update = none` in `.gitmodules` so it is never pulled in automatically.
+`setup.bat` is the Windows equivalent. `thirdparty` is only initialized for
+`modules`, `ground-station`, and `all` — it is not needed for `agent` and below.
+The `resources` submodule is marked `update = none` and never initialized automatically.
 
 Layer options for `setup.sh`: `kernel` | `micro-agent` | `simulator` | `agent` |
 `modules` | `ground-station` | `all`
@@ -247,6 +252,25 @@ Each layer's `use_cosmos_from_source.cmake` now automatically runs
 `git submodule update --init <lower-layer>` if the lower layer is absent.
 This means setting `COSMOS_SOURCE` and including a single chain file is sufficient
 even on a shallow workspace clone — cmake fetches the required layers itself.
+
+#### Thirdparty disentanglement (#85, #86, #87)
+
+`json11` and `zlib` have been moved out of `thirdparty` and bundled directly into
+the layers that need them, making `kernel` and `micro-agent` fully self-contained:
+
+- **`json11`** (MIT license) bundled in `kernel/libraries/json11/`. `kernel` no
+  longer chains to `thirdparty` at all.
+- **`zlib`** (zlib license) bundled in `micro-agent/libraries/zlib/`. `micro-agent`
+  no longer chains to `thirdparty`; sets `COSMOS_ZLIB_INCLUDE_DIR` for libpng.
+- **`thirdparty`** now provides only `localjpeg` and `localpng`. It is included
+  automatically by `modules` (the first layer that may need image codecs).
+  `localpng` reads `COSMOS_ZLIB_INCLUDE_DIR` set by micro-agent's chain.
+- **`setup.sh` / `setup.bat`** updated: `kernel`, `micro-agent`, `simulator`, and
+  `agent` no longer initialize `thirdparty`. Only `modules`, `ground-station`, and
+  `all` include it.
+
+License notices for json11 (MIT) and zlib (zlib/libpng) are preserved in the
+respective bundled header files.
 
 #### Bug fixes (agent layer)
 

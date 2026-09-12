@@ -17,7 +17,7 @@ thirdparty → kernel → micro-agent → simulator → agent → modules → gr
 
 | Layer | Repository | Purpose |
 |------:|-----------|---------|
-| -1 | [cosmosv5-thirdparty](https://github.com/hsfl/cosmosv5-thirdparty) | Standalone third-party C/C++ libraries (json11, zlib, jpeg, png) |
+| -1 | [cosmosv5-thirdparty](https://github.com/hsfl/cosmosv5-thirdparty) | Optional upper-layer libraries: localjpeg, localpng (json11 → kernel; zlib → micro-agent) |
 |  0 | [cosmosv5-kernel](https://github.com/hsfl/cosmosv5-kernel) | Bare-metal safe primitives: math, time, JSON, packet framing, serial/I2C/disk |
 |  1 | [cosmosv5-micro-agent](https://github.com/hsfl/cosmosv5-micro-agent) | Data I/O, networking, file transfer, lightweight hardware drivers |
 |  2 | [cosmosv5-simulator](https://github.com/hsfl/cosmosv5-simulator) | Pure orbital mechanics: ephemeris, atmosphere, coordinate math |
@@ -43,8 +43,8 @@ cd cosmosv5
 Then initialize only the layers you need:
 
 ```bash
-./setup.sh agent          # thirdparty + kernel + micro-agent + simulator + agent  [recommended]
-./setup.sh micro-agent    # thirdparty + kernel + micro-agent  (no physics/simulation)
+./setup.sh agent          # kernel + micro-agent + simulator + agent  [recommended]
+./setup.sh micro-agent    # kernel + micro-agent  (no physics/simulation)
 ./setup.sh ground-station # full stack
 ./setup.sh all            # full stack + physics resource files (~21 MB extra)
 ```
@@ -52,8 +52,9 @@ Then initialize only the layers you need:
 On Windows use `setup.bat` instead of `./setup.sh`.
 
 > If you prefer to initialize everything at once:
-> `git submodule update --init thirdparty kernel micro-agent simulator agent modules ground-station`
-> Add `resources` to that list only if you need physics/propagation programs.
+> `git submodule update --init kernel micro-agent simulator agent`
+> Add `thirdparty` if you need modules or ground-station (jpeg/png codecs).
+> Add `resources` if you need physics/propagation programs.
 
 ### Build and install
 
@@ -101,7 +102,7 @@ set(COSMOS_SOURCE "${CMAKE_SOURCE_DIR}/deps/cosmosv5")
 set(COSMOS_LIBS pthread)
 
 # Replace "agent" with whichever top layer your project needs.
-# The chain builds everything from thirdparty up to that layer automatically.
+# The chain builds everything from kernel up to that layer automatically.
 include(${COSMOS_SOURCE}/agent/cmake/use_cosmos_from_source.cmake)
 
 add_executable(myapp src/main.cpp)

@@ -17,7 +17,7 @@ project depends on:
 
 ```bash
 cd deps/cosmosv5
-./setup.sh agent          # kernel + micro-agent (+ thirdparty for zlib) + simulator + agent
+./setup.sh agent          # kernel + micro-agent + simulator + agent
 cd ../..
 ```
 
@@ -29,7 +29,7 @@ Available layer arguments: `kernel` | `micro-agent` | `simulator` | `agent` |
 Alternatively, initialize submodules directly:
 
 ```bash
-git -C deps/cosmosv5 submodule update --init thirdparty kernel micro-agent simulator agent
+git -C deps/cosmosv5 submodule update --init kernel micro-agent simulator agent
 ```
 
 > **cmake auto-init:** If you skip this step, the cmake chain file will attempt to
@@ -47,7 +47,7 @@ set(COSMOS_SOURCE "${CMAKE_SOURCE_DIR}/deps/cosmosv5")
 set(COSMOS_LIBS pthread)
 
 # Include up to the layer you need (chain handles everything below automatically):
-#   thirdparty → kernel → micro-agent → simulator → agent → modules → ground-station
+#   kernel → micro-agent → simulator → agent → modules (→ thirdparty: jpeg/png) → ground-station
 include(${COSMOS_SOURCE}/agent/cmake/use_cosmos_from_source.cmake)
 
 # Link against the targets you need
