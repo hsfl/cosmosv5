@@ -7,7 +7,7 @@ set LAYER=%~1
 if "%LAYER%"=="" set LAYER=agent
 
 set MODULES=
-if "%LAYER%"=="kernel"         set MODULES=thirdparty kernel
+if "%LAYER%"=="kernel"         set MODULES=kernel
 if "%LAYER%"=="micro-agent"    set MODULES=thirdparty kernel micro-agent
 if "%LAYER%"=="simulator"      set MODULES=thirdparty kernel micro-agent simulator
 if "%LAYER%"=="agent"          set MODULES=thirdparty kernel micro-agent simulator agent

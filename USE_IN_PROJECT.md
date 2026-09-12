@@ -17,7 +17,7 @@ project depends on:
 
 ```bash
 cd deps/cosmosv5
-./setup.sh agent          # thirdparty + kernel + micro-agent + simulator + agent
+./setup.sh agent          # kernel + micro-agent (+ thirdparty for zlib) + simulator + agent
 cd ../..
 ```
 
@@ -80,6 +80,9 @@ git -C deps/cosmosv5 submodule update --init resources
 Then install them alongside your project's binaries so the runtime can find them.
 Programs search for resources via the `COSMOS` or `COSMOSRESOURCES` environment
 variable, or the default path `/usr/local/cosmos/resources`.
+
+> **Note:** `wmm_2025.cof` is not yet in the resources repo. Simulations using
+> dates after 2025-01-01 will fail to load the magnetic model.
 
 ## 5. Update COSMOSv5
 

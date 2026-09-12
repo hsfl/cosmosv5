@@ -9,7 +9,7 @@ set -e
 LAYER="${1:-agent}"
 
 case "$LAYER" in
-    kernel)          MODULES="thirdparty kernel" ;;
+    kernel)          MODULES="kernel" ;;
     micro-agent)     MODULES="thirdparty kernel micro-agent" ;;
     simulator)       MODULES="thirdparty kernel micro-agent simulator" ;;
     agent)           MODULES="thirdparty kernel micro-agent simulator agent" ;;

@@ -160,3 +160,19 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 - `CMAKE_INSTALL_PREFIX` is the install root (e.g. `~/cosmos`); binaries go to
   `$prefix/bin/`, resources to `$prefix/resources/`
 - Shell on viirs is tcsh — use backtick syntax (`` `nproc` ``), not `$(nproc)`
+- **kernel is now thirdparty-free**: `json11` is bundled directly in `kernel/libraries/json11/`. The `json11` cmake target is defined in kernel unless thirdparty has already been included (e.g. by micro-agent pulling in `localzlib`), in which case thirdparty's copy takes precedence.
+- **micro-agent chains to thirdparty** (for `localzlib`) before chaining to kernel. This is temporary until issue #86 folds `zlib` into micro-agent.
+
+---
+
+## Open Issues
+
+| # | Description | Repo |
+|---|-------------|------|
+| — | `wmm_2025.cof` missing from resources — simulations after 2025-01-01 fail to load the magnetic model | `cosmosv5-resources` |
+| #82 | Introduce `timebase.h` to fix `elapsedtime`→`timelib` layering violation | `cosmosv5-kernel` |
+| #83 | Merge `configCosmosKernel.h` into `configCosmos.h` | `cosmosv5-kernel` |
+| #84 | Replace `cssl_lib` with `serialclass` and eliminate `cssl_lib` | `cosmosv5-micro-agent` |
+| #85 | ~~Fold `json11` into kernel; remove `thirdparty` as kernel dependency~~ ✅ done | `cosmosv5-kernel` |
+| #86 | Fold `zlib` into micro-agent; remove `thirdparty` as micro-agent dependency | `cosmosv5-micro-agent` |
+| #87 | Reduce `thirdparty` to `localjpeg`+`localpng` only; update setup.sh | `cosmosv5-thirdparty` |
