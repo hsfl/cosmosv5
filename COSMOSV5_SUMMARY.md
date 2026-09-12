@@ -12,7 +12,7 @@ version table.
 ## Final Architecture: Flat Workspace
 
 `hsfl/cosmosv5` is a **flat workspace** — a single repo that holds all 7 layer repos
-as top-level git submodules. Users clone one repo and get the full stack.
+plus a resources repo as top-level git submodules.
 
 ```
 cosmosv5/
@@ -23,7 +23,9 @@ cosmosv5/
   agent/           → hsfl/cosmosv5-agent
   modules/         → hsfl/cosmosv5-modules
   ground-station/  → hsfl/cosmosv5-ground-station
+  resources/       → hsfl/cosmosv5-resources  (update = none — opt-in only)
   CMakeLists.txt
+  setup.sh / setup.bat
 ```
 
 Each layer repo is independently clonable and buildable. The cmake system requires
@@ -52,6 +54,7 @@ All repos are public under the `hsfl` organization, on branch `main`.
 |  3 | `agent/` | [hsfl/cosmosv5-agent](https://github.com/hsfl/cosmosv5-agent) |
 |  4 | `modules/` | [hsfl/cosmosv5-modules](https://github.com/hsfl/cosmosv5-modules) |
 |  5 | `ground-station/` | [hsfl/cosmosv5-ground-station](https://github.com/hsfl/cosmosv5-ground-station) |
+| data | `resources/` | [hsfl/cosmosv5-resources](https://github.com/hsfl/cosmosv5-resources) |
 
 Landing page: [hsfl/cosmosv5](https://github.com/hsfl/cosmosv5) — README and library
 hierarchy doc.
@@ -60,6 +63,9 @@ hierarchy doc.
 
 All repos live under `/home2/pilger/cosmos/src/<dir>` with SSH remotes:
 `git@github.com:hsfl/cosmosv5-<dir>.git`
+
+The resources repo lives at `/home2/pilger/cosmos/src/cosmosv5-resources` (the
+workspace submodule at `cosmosv5/resources/` points to it).
 
 ---
 
@@ -86,15 +92,47 @@ including one layer's cmake file builds the full dependency stack below it.
 
 ## Building COSMOSv5
 
+### Clone and initialize
+
+Do **not** use `--recurse-submodules` — it would download all layers and resources
+regardless of what you need. Instead use the setup script to initialize only the
+layers required for your work:
+
 ```bash
-git clone --recurse-submodules https://github.com/hsfl/cosmosv5.git
+git clone https://github.com/hsfl/cosmosv5.git
 cd cosmosv5
+./setup.sh agent          # thirdparty + kernel + micro-agent + simulator + agent
+./setup.sh all            # same, plus resources (~21 MB physics data files)
+```
+
+`setup.bat` is the Windows equivalent. The resources submodule is marked
+`update = none` in `.gitmodules` so it is never pulled in automatically.
+
+Layer options for `setup.sh`: `kernel` | `micro-agent` | `simulator` | `agent` |
+`modules` | `ground-station` | `all`
+
+### Build
+
+```bash
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/install
-cmake --build . -j`nproc`                         # all programs
+cmake --build . -j`nproc`                         # all programs for selected top layer
 cmake --build . --target propagatorv3 -j`nproc`   # specific program
-cmake --install .
+cmake --install .                                  # also installs resources/ if present
 ```
+
+To build only programs up to a specific layer:
+
+```bash
+cmake .. -DCOSMOS_TOP_LAYER=micro-agent -DCMAKE_INSTALL_PREFIX=/path/to/install
+```
+
+Valid `COSMOS_TOP_LAYER` values: `kernel` | `micro-agent` | `simulator` | `agent` |
+`modules` | `ground-station` (default: `ground-station`).
+
+The cmake chain files auto-initialize any missing lower-layer submodules during
+configure, so `git submodule update --init` for specific layers is also supported
+without the setup script.
 
 > Note: shell on the development machine (viirs) is tcsh — use backtick syntax
 > (`` `nproc` ``), not `$(nproc)`.
@@ -104,11 +142,13 @@ cmake --install .
 ## Using COSMOSv5 in an External Project
 
 Add the workspace as a single submodule, point `COSMOS_SOURCE` at it, and include
-the cmake chain file for whichever layer you need.
+the cmake chain file for whichever layer you need. The cmake chain file will
+auto-initialize any missing lower-layer submodules during configure.
 
 ```bash
 git submodule add https://github.com/hsfl/cosmosv5.git deps/cosmosv5
-git submodule update --init --recursive
+git submodule update --init deps/cosmosv5
+cd deps/cosmosv5 && ./setup.sh agent && cd ../..
 ```
 
 ```cmake
@@ -129,11 +169,17 @@ Each layer exposes `cmake/use_cosmos_from_source.cmake`. The pattern in every fi
 
 1. `get_filename_component(COSMOS_SOURCE_<LAYER> "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)`
    — resolves the layer's own root from wherever the file is included.
-2. `if(DEFINED COSMOS_SOURCE)` — chains to the lower layer via `COSMOS_SOURCE`.
-3. `FATAL_ERROR` if `COSMOS_SOURCE` is not set.
+2. `if(DEFINED COSMOS_SOURCE)` — auto-initializes the lower-layer submodule if its
+   `CMakeLists.txt` is absent (runs `git submodule update --init <lower-layer>`),
+   then chains to it.
+3. `FATAL_ERROR` if `COSMOS_SOURCE` is not set, or if auto-init fails.
 
 `COSMOS_SOURCE` must point to the flat workspace root (the directory containing
 `thirdparty/`, `kernel/`, etc.).
+
+Each chain file sets `COSMOS_<LAYER>_INCLUDED TRUE` when it runs. The workspace
+`CMakeLists.txt` uses these flags to conditionally add program subdirectories,
+so only programs for initialized layers are built.
 
 ---
 
@@ -143,9 +189,11 @@ Each layer exposes `cmake/use_cosmos_from_source.cmake`. The pattern in every fi
 |------|----------|---------|
 | `README.md` | `cosmosv5/` repo root | GitHub landing page |
 | `cosmos_v5_library_hierarchy.md` | `cosmosv5/` repo root | Full library/target reference |
-| `COSMOSV5_WORKSPACE.md` | `cosmos/src/` | Workspace architecture and build instructions |
-| `github_migration_plan.md` | `cosmos/src/` | Original migration plan (historical) |
-| `COSMOSV5_SUMMARY.md` | `cosmos/src/` | This file |
+| `COSMOSV5_WORKSPACE.md` | `cosmosv5/` repo root | Workspace architecture and build instructions |
+| `COSMOSV5_SUMMARY.md` | `cosmosv5/` repo root | This file |
+| `CLAUDE.md` | `cosmosv5/` repo root | AI context file (auto-loaded by Claude Code) |
+| `setup.sh` / `setup.bat` | `cosmosv5/` repo root | Selective layer submodule init scripts |
+| `github_migration_plan.md` | `cosmos/src/` | Original migration plan (historical, not in repo) |
 
 ---
 
@@ -156,6 +204,65 @@ Each layer exposes `cmake/use_cosmos_from_source.cmake`. The pattern in every fi
 | v5.0.0 | 2026-08-27 | Initial release of the seven-repository flat workspace architecture |
 
 All 8 repos (`cosmosv5` + 7 layers) are tagged and have a published GitHub release at `v5.0.0`.
+
+### Post-release changes (post v5.0.0, on `main`)
+
+#### Resources submodule (`hsfl/cosmosv5-resources`)
+
+A new `resources/` submodule was added to the workspace containing the minimal physics
+data files required to run propagation programs:
+
+- `general/egm2008_coef.txt` — EGM2008 gravitational model
+- `general/pgm2000a_coef.txt` — PGM2000A gravitational model
+- `general/iers_pm_dut_ls.txt` — IERS Earth orientation parameters
+- `general/lnx1900.405` — JPL Development Ephemeris DE405
+- `general/wmm_2005/2010/2015.cof` — World Magnetic Model epochs
+- `general/yalebsc.txt` — Yale Bright Star Catalog
+
+The submodule is marked `update = none` and is **not** initialized by default.
+Use `./setup.sh all` or `git submodule update --init resources` to get it.
+`cmake --install` copies it to `${CMAKE_INSTALL_PREFIX}/resources/general/`.
+
+Note: `wmm_2020.cof` is not yet included; simulations using dates after 2020-01-01
+will fail to load the magnetic model until that file is added.
+
+#### Selective layer initialization (`setup.sh` / `setup.bat`)
+
+`--recurse-submodules` is no longer recommended. The workspace now ships
+`setup.sh` (Linux/macOS) and `setup.bat` (Windows) for initializing only the
+layers you need. Example:
+
+```bash
+./setup.sh micro-agent    # fetches only thirdparty + kernel + micro-agent
+./setup.sh agent          # fetches thirdparty through agent (most common)
+./setup.sh all            # full stack including resources
+```
+
+#### `COSMOS_TOP_LAYER` cmake option
+
+The workspace `CMakeLists.txt` now accepts `-DCOSMOS_TOP_LAYER=<layer>` to build
+only programs up to the specified layer. Valid values: `kernel`, `micro-agent`,
+`simulator`, `agent`, `modules`, `ground-station` (default: `ground-station`).
+
+#### CMake chain file auto-initialization
+
+Each layer's `use_cosmos_from_source.cmake` now automatically runs
+`git submodule update --init <lower-layer>` if the lower layer is absent.
+This means setting `COSMOS_SOURCE` and including a single chain file is sufficient
+even on a shallow workspace clone — cmake fetches the required layers itself.
+
+#### Bug fixes (agent layer)
+
+- **`physicsclass.cpp` / `physicslib.cpp`**: The PGM2000A branch of the gravity
+  model loader called `fopen()` then immediately passed the result to `fscanf()`
+  without checking for `nullptr`. If `pgm2000a_coef.txt` is absent this was
+  undefined behavior. Added the same `fi==nullptr` guard that the EGM2008 branch
+  already had.
+
+- **`propagatorv3.cpp`**: Added an explicit resource-directory check at startup
+  that prints a clear diagnostic and exits if the resources directory or gravity
+  model file cannot be found, instead of failing silently during the first physics
+  step.
 
 ### Post-tag fix included in v5.0.0
 
