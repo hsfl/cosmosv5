@@ -15,7 +15,7 @@ case "$LAYER" in
     agent)           MODULES="kernel micro-agent simulator agent" ;;
     modules)         MODULES="thirdparty kernel micro-agent simulator agent modules" ;;
     ground-station)  MODULES="thirdparty kernel micro-agent simulator agent modules ground-station" ;;
-    all)             MODULES="thirdparty kernel micro-agent simulator agent modules ground-station resources" ;;
+    all)             MODULES="thirdparty kernel micro-agent simulator agent modules ground-station" ;;
     *)
         echo "Usage: $0 [kernel|micro-agent|simulator|agent|modules|ground-station|all]"
         echo ""
@@ -32,4 +32,12 @@ esac
 echo "Initializing submodules for layer: $LAYER"
 # shellcheck disable=SC2086
 git submodule update --init $MODULES
+
+# resources is marked update=none in .gitmodules to prevent accidental pulls.
+# Override that setting explicitly when the user requests 'all'.
+if [ "$LAYER" = "all" ]; then
+    echo "Initializing resources submodule..."
+    git -c submodule.resources.update=checkout submodule update --init resources
+fi
+
 echo "Done."
