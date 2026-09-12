@@ -35,13 +35,26 @@ the standard entry point for building and developing COSMOS.
 ### Clone the workspace
 
 ```bash
-git clone --recurse-submodules https://github.com/hsfl/cosmosv5.git
+git clone https://github.com/hsfl/cosmosv5.git
 cd cosmosv5
 ```
 
-This delivers all seven layers in a flat directory tree — one checkout each, no duplication.
+Then initialize only the layers you need:
 
-### Build and install all programs
+```bash
+./setup.sh agent          # thirdparty + kernel + micro-agent + simulator + agent  [recommended]
+./setup.sh micro-agent    # thirdparty + kernel + micro-agent  (no physics/simulation)
+./setup.sh ground-station # full stack
+./setup.sh all            # full stack + physics resource files (~21 MB extra)
+```
+
+On Windows use `setup.bat` instead of `./setup.sh`.
+
+> If you prefer to initialize everything at once:
+> `git submodule update --init thirdparty kernel micro-agent simulator agent modules ground-station`
+> Add `resources` to that list only if you need physics/propagation programs.
+
+### Build and install
 
 ```bash
 mkdir build && cd build
@@ -50,25 +63,20 @@ cmake --build . -j`nproc`
 cmake --install .
 ```
 
-Binaries are installed to `<prefix>/bin/` — so `-DCMAKE_INSTALL_PREFIX=~/cosmos` puts them in
-`~/cosmos/bin/`. If `-DCMAKE_INSTALL_PREFIX` is omitted it defaults to `~/cosmos`.
+Binaries install to `<prefix>/bin/`. The default prefix is `~/cosmos`.
 
-### Build a specific program
-
-To build one program and its dependencies only:
+To build only up to a specific layer (skips higher-layer programs and their dependencies):
 
 ```bash
-mkdir build && cd build
-cmake ..
-cmake --build . --target propagatorv3 -j`nproc`
+cmake .. -DCOSMOS_TOP_LAYER=micro-agent
 ```
 
 ### Prerequisites
 
 * CMake 3.20+
 * A C++11-capable compiler (GCC 9+, Clang 10+)
-* IERS EOP data, JPL ephemeris files, WMM.COF, and DEM tiles for simulator-layer programs
-  — see the [Getting Started guide](https://hsfl.github.io/cosmos-docs/pages/2-getting_started/index.html)
+* Git (for submodule auto-initialization during cmake configure)
+* Physics/propagation programs additionally require resource files — initialize with `./setup.sh all` or `git submodule update --init resources`, then `cmake --install` to deploy them.
 
 ---
 
@@ -81,7 +89,8 @@ whichever layer it needs — the chain builds all layers below it automatically.
 
 ```bash
 git submodule add https://github.com/hsfl/cosmosv5.git deps/cosmosv5
-git submodule update --init --recursive
+git submodule update --init deps/cosmosv5
+cd deps/cosmosv5 && ./setup.sh agent && cd ../..
 ```
 
 ### 2. CMakeLists.txt

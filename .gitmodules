@@ -22,3 +22,4 @@
 [submodule "resources"]
 	path = resources
 	url = https://github.com/hsfl/cosmosv5-resources.git
+	update = none
