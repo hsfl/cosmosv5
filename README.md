@@ -82,6 +82,67 @@ cmake .. -DCOSMOS_TOP_LAYER=micro-agent
 
 ---
 
+## Keeping Up to Date
+
+The workspace records a specific commit for each layer submodule. Pulling the workspace
+updates those recorded commits, but does **not** move your checked-out submodules — you must
+sync them yourself.
+
+### Catch up all layer submodules
+
+After pulling the workspace, bring every layer you have checked out to the commit the
+workspace records:
+
+```bash
+git pull
+git submodule update
+```
+
+`git submodule update` only touches initialized submodules, so layers you never set up stay
+skipped. To add a higher layer later, rerun `./setup.sh <layer>`.
+
+To see where each layer sits relative to the workspace, use `git submodule status` — a leading
+`+` means the checked-out commit differs from the one recorded, `-` means not initialized.
+
+> **Developers:** to move every initialized layer to the latest commit on its remote branch
+> (rather than the commit the workspace records), use
+> `git submodule update --remote`. Commit the resulting ref changes in the workspace
+> (`git add <layer> && git commit`) if you want to publish them.
+
+> **Developers — publishing submodule changes:** submodules check out on a detached HEAD,
+> so switch to a branch (`git checkout main`) before committing inside a layer. Always push
+> the layer repo *before* pushing the workspace commit that points at it; otherwise other
+> users' `git pull` fails with `upload-pack: not our ref <sha>`. To have git enforce this, run
+> once in the workspace:
+>
+> ```bash
+> git config push.recurseSubmodules check
+> ```
+>
+> A workspace push is then refused if any submodule commit it references hasn't been pushed.
+
+### Update resources
+
+`resources` is marked `update = none`, so plain `git submodule update` (with or without
+`git pull`) silently skips it. Override that setting explicitly:
+
+```bash
+# Sync resources to the commit the workspace records
+git -c submodule.resources.update=checkout submodule update --init resources
+
+# Or pull the latest resources from the remote
+git -c submodule.resources.update=checkout submodule update --remote resources
+```
+
+Then redeploy the data files into your install prefix:
+
+```bash
+cd build
+cmake --install .
+```
+
+---
+
 ## Using COSMOSv5 in an external project
 
 Add the workspace as a single submodule. Your project includes the cmake chain file for
