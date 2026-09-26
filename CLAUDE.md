@@ -183,6 +183,16 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 | #85 | ~~Fold `json11` into kernel; remove `thirdparty` as kernel dependency~~ ✅ | kernel |
 | #86 | ~~Fold `zlib` into micro-agent; remove `thirdparty` as micro-agent dependency~~ ✅ | micro-agent |
 | #87 | ~~Reduce `thirdparty` to `localjpeg`+`localpng` only; update setup.sh~~ ✅ | thirdparty |
+| #88 | Finish old (`.ini`)→new (realm JSON) node/device model migration — VMMO as first full test case; see `tasks/001-node-device-model-completion.md` | agent |
+
+---
+
+## Task files
+
+Discrete work items with real detail (background, work items, status log)
+live in `tasks/*.md` — see `tasks/README.md` for the format. The table above
+stays the compact index; link to a task file from a row when there's more to
+say than fits in one line.
 
 ---
 

@@ -19,3 +19,5 @@
 !resources
 !setup.sh
 !setup.bat
+!tasks
+!tasks/**
