@@ -72,6 +72,20 @@ cd cosmosv5
 
 `setup.bat` is the Windows equivalent. Resources are excluded by default (`update = none` in `.gitmodules`). `setup.sh all` handles this with `git -c submodule.resources.update=checkout submodule update --init resources` — plain `git submodule update --init resources` is silently skipped.
 
+Both setup scripts also set `push.recurseSubmodules=check` (local `.git/config`, not committed) in the
+workspace and every initialized submodule, so a workspace push is refused if it references a submodule
+commit that hasn't been pushed. That failure mode previously broke other users' pulls with
+`upload-pack: not our ref <sha>`. When changing a layer: commit inside it on a branch (submodules check
+out detached), push the layer first, then commit and push the workspace ref update.
+
+### Staying current
+
+```bash
+git pull && git submodule update        # sync initialized layers to recorded commits
+git -c submodule.resources.update=checkout submodule update --init resources   # resources (skipped otherwise)
+git submodule update --remote           # developers: move layers to latest remote main
+```
+
 ### Build
 
 ```bash
