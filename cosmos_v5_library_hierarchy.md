@@ -24,7 +24,7 @@ kernel → micro-agent → simulator → agent → modules → ground-station
 `thirdparty` provides only `localjpeg` and `localpng`.
 
 **Install prefix:** `~/cosmos` (default via `CMAKE_INSTALL_PREFIX`). Binaries
-install to `$prefix/bin/`; resource files to `$prefix/resources/general/`.
+install to `$prefix/bin/`; resource files to `$prefix/resources/`.
 
 ---
 
@@ -364,4 +364,4 @@ T        —                           (jpeg/png only — no COSMOS deps)
 - **`track_sband` (general)**: pre-existing device API bug (`.ant` vs `->ant`); skipped.
 - **gtest**: not installed on viirs; two tests skipped with `find_package(GTest QUIET)` guard.
 - **Source files copied, not moved**: all source files copied from cosmos-core to the new repos at the v5.0 split.
-- **Resources**: physics data files live in `hsfl/cosmosv5-resources` (`resources/` submodule, `update = none`). Required by simulator-layer programs at runtime. `cmake --install` deploys them to `$prefix/resources/general/`.
+- **Resources**: physics data files live in `hsfl/cosmosv5-resources` (`resources/` submodule, `update = none`). Required by simulator-layer programs at runtime. `cmake --install` deploys them to `$prefix/resources/`.

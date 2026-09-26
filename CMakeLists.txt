@@ -19,7 +19,8 @@ endif()
 # Only the selected layer and everything below it will be compiled.
 # cmake auto-initializes required submodules during configure.
 # Resources are not included automatically; initialize with:
-#   git submodule update --init resources
+#   git -c submodule.resources.update=checkout submodule update --init resources
+# (plain --init resources is skipped because .gitmodules sets update = none)
 set(COSMOS_TOP_LAYER "ground-station" CACHE STRING
     "Highest layer to build (kernel|micro-agent|simulator|agent|modules|ground-station)")
 set_property(CACHE COSMOS_TOP_LAYER PROPERTY STRINGS
@@ -66,7 +67,8 @@ if(COSMOS_GROUND_STATION_INCLUDED)
     add_subdirectory(ground-station/programs  ${CMAKE_BINARY_DIR}/ground-station/programs)
 endif()
 
-# Install resource files to ${CMAKE_INSTALL_PREFIX}/resources/ if the submodule is present.
+# Install resource files (general/, logo/, ...) to ${CMAKE_INSTALL_PREFIX}/resources/
+# if the submodule is present.
 if(EXISTS "${CMAKE_SOURCE_DIR}/resources/general")
-    install(DIRECTORY resources/general DESTINATION resources)
+    install(DIRECTORY resources/ DESTINATION resources PATTERN ".git*" EXCLUDE)
 endif()

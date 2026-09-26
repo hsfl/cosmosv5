@@ -40,6 +40,10 @@ cd cosmosv5
 
 On Windows use `setup.bat` instead of `./setup.sh`.
 
+The setup scripts also set `push.recurseSubmodules=check` (local `.git/config`) in the
+workspace and each initialized submodule, so git refuses a workspace push that references
+an unpushed submodule commit. See [Keeping Up to Date](#keeping-up-to-date).
+
 ### Layer options for setup.sh / setup.bat
 
 | Argument | Submodules initialized |
@@ -58,6 +62,7 @@ You can also initialize submodules directly without the script:
 
 ```bash
 git submodule update --init kernel micro-agent
+git config push.recurseSubmodules check   # manual init skips the push check
 ```
 
 ### Resources submodule
@@ -73,13 +78,46 @@ initialized automatically. To get it:
 git -c submodule.resources.update=checkout submodule update --init resources
 ```
 
-After building, `cmake --install` copies `resources/general/` to
-`${CMAKE_INSTALL_PREFIX}/resources/general/`. Programs locate resources via the
+After building, `cmake --install` copies the contents of `resources/` (`general/`,
+`logo/`) to `${CMAKE_INSTALL_PREFIX}/resources/`. Programs locate resources via the
 `COSMOS` or `COSMOSRESOURCES` environment variable, or the default
 `/usr/local/cosmos/resources`.
 
 > **Note:** `wmm_2025.cof` is not yet included in the resources repo. Simulations
 > using dates after 2025-01-01 will fail to load the magnetic model.
+
+---
+
+## Keeping Up to Date
+
+The workspace records a specific commit for each layer submodule. Pulling the workspace
+updates those recorded commits but does **not** move your checked-out submodules.
+
+**Quick reference:**
+
+```bash
+git pull && git submodule update        # sync initialized layers to recorded commits
+git -c submodule.resources.update=checkout submodule update --init resources   # resources (skipped otherwise)
+git submodule update --remote           # developers: move layers to latest remote main
+```
+
+- `git submodule update` only touches initialized submodules; rerun `./setup.sh <layer>`
+  to add a higher layer later.
+- `git submodule status` shows each layer's state: a leading `+` means the checked-out
+  commit differs from the recorded one, `-` means not initialized.
+- `resources` is `update = none`, so plain `git submodule update` silently skips it — the
+  `-c` override is required (add `--remote` to take the latest resources). Rerun
+  `cmake --install .` afterwards to redeploy the data files.
+- After `--remote`, commit the resulting ref changes in the workspace
+  (`git add <layer> && git commit`) if you want to publish them.
+
+### Publishing submodule changes
+
+Submodules check out on a detached HEAD, so switch to a branch (`git checkout main`)
+before committing inside a layer. Always push the layer repo *before* pushing the
+workspace commit that points at it; otherwise other users' `git pull` fails with
+`upload-pack: not our ref <sha>`. The `push.recurseSubmodules=check` setting applied by
+the setup scripts enforces this ordering.
 
 ---
 
