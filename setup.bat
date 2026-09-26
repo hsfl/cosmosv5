@@ -38,4 +38,9 @@ if "%LAYER%"=="all" (
     git -c submodule.resources.update=checkout submodule update --init resources
 )
 
+:: Refuse workspace pushes that reference unpushed submodule commits
+:: (otherwise other users' pulls fail with "upload-pack: not our ref").
+git config push.recurseSubmodules check
+git submodule foreach --quiet "git config push.recurseSubmodules check"
+
 echo Done.

@@ -112,8 +112,8 @@ To see where each layer sits relative to the workspace, use `git submodule statu
 > **Developers — publishing submodule changes:** submodules check out on a detached HEAD,
 > so switch to a branch (`git checkout main`) before committing inside a layer. Always push
 > the layer repo *before* pushing the workspace commit that points at it; otherwise other
-> users' `git pull` fails with `upload-pack: not our ref <sha>`. To have git enforce this, run
-> once in the workspace:
+> users' `git pull` fails with `upload-pack: not our ref <sha>`. `setup.sh` / `setup.bat`
+> configure git to enforce this; for a clone set up another way, run once in the workspace:
 >
 > ```bash
 > git config push.recurseSubmodules check
