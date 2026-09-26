@@ -88,6 +88,16 @@ The workspace records a specific commit for each layer submodule. Pulling the wo
 updates those recorded commits, but does **not** move your checked-out submodules — you must
 sync them yourself.
 
+**Quick reference:**
+
+```bash
+git pull && git submodule update        # sync initialized layers to recorded commits
+git -c submodule.resources.update=checkout submodule update --init resources   # resources (skipped otherwise)
+git submodule update --remote           # developers: move layers to latest remote main
+```
+
+Details for each follow.
+
 ### Catch up all layer submodules
 
 After pulling the workspace, bring every layer you have checked out to the commit the
