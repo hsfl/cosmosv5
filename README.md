@@ -51,10 +51,17 @@ Then initialize only the layers you need:
 
 On Windows use `setup.bat` instead of `./setup.sh`.
 
+The setup scripts also set `push.recurseSubmodules=check` in the workspace and each initialized
+submodule, so git refuses a workspace push that references an unpushed submodule commit (see
+[Keeping Up to Date](#keeping-up-to-date)).
+
 > If you prefer to initialize everything at once:
 > `git submodule update --init kernel micro-agent simulator agent`
 > Add `thirdparty` if you need modules or ground-station (jpeg/png codecs).
-> Add `resources` if you need physics/propagation programs.
+> For physics/propagation programs, add `resources` with
+> `git -c submodule.resources.update=checkout submodule update --init resources`
+> (plain `--init resources` is silently skipped because of `update = none`).
+> Manual init skips the push check; run `git config push.recurseSubmodules check` yourself.
 
 ### Build and install
 
