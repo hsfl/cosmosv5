@@ -1,7 +1,7 @@
 ---
 status: in-progress
 created: 2026-10-14
-updated: 2026-10-14
+updated: 2026-10-22
 ---
 
 # Lunar albedo map for detector simulation
@@ -19,8 +19,9 @@ Detector bands (from the source document):
 - Active (laser, zero phase): 532, 1064, 1560 nm
 
 Decisions (2026-10-14):
-- A download script fetches the source data; only the converted product is
-  committed.
+- A download script fetches the source data and builds the converted product
+  locally. Neither is committed: `resources/mapping/moon/albedo_76/` is
+  gitignored (decided 2026-10-22, option 3 below).
 - The stored product is our own format: tiled like the DEM to stay under git
   limits, unsigned 16-bit values (albedo 0–1 scaled to 0–65535), at the
   native 400 m resolution.
@@ -146,7 +147,7 @@ is believed to be i = 30°, e = 0°, g = 30° (Ohtake et al. 2013); still to ver
 then 140 lines × 360 samples × 63 bands of 32-bit float, band sequential,
 null `FF7FFFFB`, 1 pixel per degree, 70°N–70°S, longitude 0–360.
 
-### Proposed stored format (not yet approved)
+### Proposed stored format (storage location decided; layout not yet approved)
 
 - `resources/mapping/moon/albedo_76/` at 76 pixels/degree (400 m), with an
   index file like `dems5.dat`
@@ -162,12 +163,14 @@ null `FF7FFFFB`, 1 pixel per degree, 70°N–70°S, longitude 0–360.
 - **Open:** the total is about 6 GB (3–4 GB compressed), well over GitHub's
   recommended repo size. Options: (1) Git LFS (needs a paid quota), (2) commit
   a 1 km version (about 1 GB) and have the script regenerate 400 m,
-  (3) keep the tiles out of git, built by the script and gitignored
-  (Claude leans toward 3).
+  (3) keep the tiles out of git, built by the script and gitignored.
+  **Decided 2026-10-22: option 3.** The script must therefore be reliable and
+  repeatable (resumable downloads, checksums), and the simulator must cope
+  with the tiles being absent (fall back to a constant albedo, with a warning).
 
 ## Work items
 
-- [x] Storage: download script, commit only the converted product; own tiled uint16 format at 400 m
+- [x] Storage: download script builds the product locally; tiles gitignored, not committed (option 3); own tiled uint16 format at 400 m
 - [x] Stored quantity: single-scattering albedo w per band
 - [ ] Define the tile format (tile size, header, scaling, null value) and its reader
 - [ ] Download script for the source tiles
@@ -192,3 +195,4 @@ null `FF7FFFFB`, 1 pixel per degree, 70°N–70°S, longitude 0–360.
 - 2026-10-14: M3 L2 and Kaguya MI mosaics investigated (see Background); WAC_HAPKEPARAMMAP found
 - 2026-10-14: Kaguya MI chosen for 850–1650 nm
 - 2026-10-14: MI scaling/grid and Hapke map format confirmed; stored format proposed; repo-size question open
+- 2026-10-22: repo size settled with option 3: tiles built by the script, gitignored in resources
