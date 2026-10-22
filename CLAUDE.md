@@ -184,6 +184,7 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 | #86 | ~~Fold `zlib` into micro-agent; remove `thirdparty` as micro-agent dependency~~ ✅ | micro-agent |
 | #87 | ~~Reduce `thirdparty` to `localjpeg`+`localpng` only; update setup.sh~~ ✅ | thirdparty |
 | #88 | Finish old (`.ini`)→new (realm JSON) node/device model migration — VMMO as first full test case; see `tasks/001-node-device-model-completion.md` | agent |
+| — | Lunar albedo map (passive 300–1650 nm, active 532/1064/1560 nm; WAC Hapke-normalized base, 400 m, own uint16 tiles) for detector simulation; see `tasks/003-lunar-albedo-map.md` | simulator, `cosmosv5-resources` |
 
 ---
 
