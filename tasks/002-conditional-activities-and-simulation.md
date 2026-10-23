@@ -1,7 +1,7 @@
 ---
 status: in-progress
 created: 2026-10-11
-updated: 2026-10-12
+updated: 2026-10-23
 ---
 
 # Conditional activities through the command queue, and simulating them
@@ -60,7 +60,7 @@ Authoring (human units, one condition per row) is in DMT:
 
 ### 2. Standard requests
 - [x] Register `request_adcs` and `request_camera` as default nops in `Agent` (validate, debug_log, return OK; bad args return GENERAL_ERROR_ARGS with usage)
-- [x] Command vocabulary: `request_adcs point topo|lvlh|geoc|selc|icrf qx qy qz qw` (quaternion normalized), `request_camera snap frames rate inttime [tile]` (frames >= 0, 0 = continuous; tile >= 1 frames per file, default 1000; rate Hz > 0, inttime s > 0)
+- [x] Command vocabulary: `request_adcs point topo|lvlh|geoc|selc|icrf qx qy qz qw` (quaternion normalized), `request_camera snap [camera] frames rate inttime [tile]` (camera = optional CAM piece name, taken as such when not a number; frames >= 0, 0 = continuous; tile >= 1 frames per file, default 1000; rate Hz > 0, inttime s > 0)
 - [x] Parsers public and static for the simulator to reuse: `Agent::parse_adcs_point()`, `Agent::parse_camera_snap()`
 - [ ] Payload/ADCS agents override them with real handlers
 
@@ -82,6 +82,10 @@ Authoring (human units, one condition per row) is in DMT:
 - [x] `request_adcs point`: stored per node in `Simulator::attcommands` (not `loc_req.att`: the LVLH attitude propagator copies `loc_req.att.lvlh` into the attitude every step, and the slew code keeps its progress there)
 - [x] `AttitudeStep()` honors the command first: frame+quaternion converted to ICRF at the current position each step (so lvlh/topo track), slerped at the `slewBodyAxis` rate limit. The command persists until the next `request_adcs point`; there is no "release to automatic" yet.
 - [x] `request_camera snap` imaging session model: the queue fires the Event when its condition becomes true; the session is the "imaging allowed" gate. A frame is taken whenever allowed; after each frame imaging is disallowed for 1/rate; after `frames` frames it stays disallowed. The session ends when complete or when the condition goes false, which also re-arms the Event. Frames due within a step are all taken if the condition is true at the step. One event per session, at session end: utc = first frame, dtime = to end of last frame's integration, value = frames, red if short.
+- [x] `request_eps on|off <device>` (device = piece name from the node file, e.g. `camera1`, `adcs_rw_x`): default nop in `Agent` with parser `parse_eps_switch()`; `Simulator::EpsSwitch()` sets on = state 1, amp/volt = namp/nvolt (as `State::Init()` does for `DEVICE_FLAG_ON`), off = state 0, amp/volt/power 0. Unknown name, a piece with no device, or a bad verb flags the Event red. The electrical propagator uses the new draw from the next step.
+- [x] `request_camera snap <camera>`: the session records its camera; unknown name or non-CAM piece flags the Event red. Each request is its own session, so sessions on different cameras run independently. Tile events carry the request (with the camera) as data.
+- [x] Battery capacity from the node's battery devices: `State::Init()` sets `battcap` [J] = Σ batt.capacity [A·s] × (minvolt + maxvolt)/2 (`node_calc()` sums A·s only; the electrical propagator works in J). No batteries: default 36000 J stays. The node file's `node.phys` is not an input (overlay reads only node.type).
+- [x] Battery starts at 50%: `ElectricalPropagator::Init(bp = .5)` sets `battlev = bp * battcap` when the node file gives no charge (`battlev` 0); a `battlev` > 0 in the node file overrides it. `Reset()` returns to that start value through `initialphys`.
 - [x] Tiles: frames are saved in tiles of up to `tile` frames (one file each); the take restarts after each tile, so continuous acquisitions are cut every tile. The simulator reports one event per tile (utc = first frame, dtime to end of last frame's integration, value = frames); the last, partial tile is reported when the session ends. Real payload handlers should write one file per tile.
 - [ ] Data volume (`cbytes`/`dbytes`) per tile from the detector definition
 - [x] Frame period is 1/rate only; integration time is ignored for timing (detectors: inttime ~100s of µs, interframe ~ms; if a request gets it wrong, frame rate wins). inttime only extends the reported dtime.
@@ -109,3 +113,8 @@ Authoring (human units, one condition per row) is in DMT:
 - 2026-10-13: AttitudeStep honors request_adcs point (slerp at the slew rate limit); request_camera snap imaging sessions; scratch test passes; cosmosv5 and SOST build clean
 - 2026-10-13: frames = 0 is continuous imaging; frame period from rate only
 - 2026-10-13: tiles (default 1000 frames, one file each) for request_camera snap; scratch test passes; cosmosv5 and SOST build clean
+- 2026-10-23: from DMT: `request_eps on|off <device>` and battery start at 50% of battcap (overridable by node-file battlev); propagatorv3 builds clean; scratch test on lunar/vmmo passes (start 18000/36000 J; camera1 on/off changes powuse on the next step; unknown name, deviceless piece, bad verb flagged red). vmmo.json has namp = nvolt = 0 on every device, so switching changes nothing until DMT fills them. Not committed.
+- 2026-10-23: from DMT: optional camera name in `request_camera snap` (camera1 passive/sunlight, camera2 active/shadow in the vmmo queue); `Simulator::findDevice()` shared with request_eps; scratch test passes (camera1 continuous 5-frame tiles unaffected by a finite camera2 session and an unnamed one; unknown and non-CAM names red). Not committed.
+- 2026-10-23: DMT reported `point nadir` aiming at Earth (closest = 0). Not reproduced: SOST-style AddNode (PositionLunar, AttitudeLVLH, selenocentric FLO state) + targets + live vmmo queue, 8 h at 10 s, gives closest = 10 every step and nadir on -sci.s (0.0°). closest = 0 is unset (COSMOS_EARTH = 3). Hardened anyway: `eventClosestBody` made public as `Physics::closest_body()` and used by `aimDirection()`. Asked DMT for its test source.
+- 2026-10-23: root cause of closest = 0 found with DMT's test program: the cross-node `cached_extra` cache in `pos_extra()` (convertlib.cpp) copied the whole extrapos on a hit, overwriting the node's position-dependent fields (closest, l2e/e2l, l2g/g2l, l2s/s2l, l2p/p2l and derivatives) with another node's or zeroed values; hit via `att_lvlh()` from the LVLH attitude propagator. Fixed to share only the time-dependent part. DMT program: closest 10 at all 48 samples; my repro changes by ≤ 0.1°; full cosmosv5 build clean. Not committed.
+- 2026-10-23: from DMT: battcap derived from devspec.batt in J. vmmo (4S6P, 70200 A·s, 12.8–16.6 V) = 1031940 J (≈287 Wh), starts at 515970 J; DMT's 8 h queuerun ends at 797097 J. Starting-charge override still needs a real input (spacecraft bus); node-file battlev isn't one. Not committed.
