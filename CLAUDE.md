@@ -148,7 +148,7 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 
 **ground-station:** `CosmosKiss` `CosmosGpio` `CosmosKissTnc` `CosmosKpc9612p` `CosmosMixwTnc`
 `CosmosGs232b` `CosmosTs2000` `CosmosIc9100` `CosmosPrkx2suClass` `CosmosPrkx2su` `CosmosUsrp`
-`CosmosNetRadio`
+`CosmosNetRadio` `CosmosArchive` (SOSE archive) `CosmosL0Sim` (simulated L0)
 
 **thirdparty (optional):** `localjpeg` `localpng`
 
@@ -164,6 +164,9 @@ target_link_libraries(myapp CosmosAgent CosmosSimulator CosmosConvert ...)
 - **Earth geometry constants** (`REARTHM`, `REARTHKM`, etc.) are in `convertdef.h` (kernel), not `physicsdef.h`.
 - **`agent_file`** lives in modules layer (includes `file_module.h`).
 - **`agent_transmitter`/`transmitter2`** live in ground-station (use `kisslib.h`).
+- **The SOSE archive is ground only:** `archive/archivelib.h` (`CosmosArchive`) and L0 simulation
+  `science/l0simclass.h` (`CosmosL0Sim`) are in ground-station, and `archive_simulate` runs both
+  passes. micro-agent (flight code) and propagatorv3 know nothing of archives.
 - **gtest not installed** on viirs — two tests guarded with `find_package(GTest QUIET)`.
 - **`track_sband` (general)** has a pre-existing device API bug (`.ant` vs `->ant`); skipped in build.
 - **json11** is MIT licensed — copyright notice must be preserved when bundled in kernel.
