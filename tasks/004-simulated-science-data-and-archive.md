@@ -113,7 +113,10 @@ ground point at a slightly different time.
   of the track is covered (19.2 m strips with ≈ 20.4 m gaps). Smear in 2 ms
   ≈ 3.2 m (≈ 1 pixel).
 - Channel time offset = along-track stripe separation / ground speed. The
-  field is ≈ 2.1 km along-track, so offsets reach about ±0.65 s.
+  field is circular, so a stripe that still spans the full 87-superpixel
+  swath (half-width 20.9 mrad) must sit within ±15.8 mrad of the boresight
+  along-track (±0.63 km). Offsets therefore reach about ±0.39 s, not the
+  ±0.65 s the full 3° field would allow.
 - Active: 48.7 m between shots. The 30 ms integration fills the whole
   33.33 Hz period, so each return is smeared ≈ 49 m along-track. The ROI is
   ≈ 33 m (UV/VIS) / 38 m (InGaAs) on the ground.
@@ -123,8 +126,9 @@ ground point at a slightly different time.
 
 ### Open (for the instrument team)
 - Filter stripe positions: which rows each channel reads (or its along-track
-  angle from the boresight). Placeholder: stripes evenly spaced across the
-  3° field per camera.
+  angle from the boresight). Placeholder: evenly spaced within ±15 mrad
+  (UV/VIS −15, −5, 5, 15; NIR 0; SWIR −15, 0, 15), ascending wavelength in
+  the direction of travel.
 - Whether all cameras share one acquisition trigger (assumed yes).
 - Superpixel sum range: 49 × 16-bit (panda) or 36 × 14-bit (InGaAs, assumed)
   dark-subtracted pixels needs ≥ 22 bits and can go negative. Assumed L0
@@ -194,15 +198,22 @@ Root is `$COSMOSARCHIVE`, else `<cosmosroot>/archive` (`get_cosmosarchive()`):
 ### Detector configuration (proposed)
 Top-level `instruments` object in the node file (like `command_events`).
 `lvmm` contains:
-- `cameras`: `uvvis`, `nir`, `swir`, each with a piece name, its
-  **physical** detector (pixels, pitch, IFOV, QE per band, read noise, dark,
-  full well, bits) and its **acquisition** (superpixel size, swath columns,
-  rows read per channel).
-- `channels`: wavelength → camera and filter stripe.
-- `modes`: `passive` and `active`, each with rate, integration, and channels
-  or lasers. The mode name is the file name prefix.
-- `l0`: samples, data type, compression ratio.
-- `provisional` flag and `baseline: "Phase B1 2026-10-26"`.
+- `cameras`: `uvvis`, `nir`, `swir`, each with a `piece` and `detector`
+  name, its `physical` detector (`cols`, `rows`, `pitch` m, `ifov` rad, `qe`
+  per wavelength, `read_noise` e⁻, `dark_current` e⁻/s, `full_well` e⁻,
+  `bits`) and its `acquisition` (`superpixel` [across, along], `swath_cols`,
+  `first_col`, and `stripes`: wavelength → `along` rad (+ = ahead) and
+  `first_row`).
+- `modes`: `passive` (`rate` Hz, `inttime` s, `channels` nm) and `active`
+  (also `lasers` nm, `roi`, `reduction`). The mode name is the file name
+  prefix.
+- `l0`: `samples`, `datatype`, `interleave`, `compression_ratio`.
+- `fov`, `aperture`, `reference_altitude`, `provisional`, `baseline`, and
+  `notes` listing the placeholders.
+- Implemented in `~/cosmos/realms/lunar/nodes/vmmo.json` (2026-10-27).
+  Piece mapping is a placeholder: `camera1` uvvis, `camera2` nir,
+  `camera3` swir. The DMT node save (`json_dump_node` plus
+  `writeCommandEvents`) does not yet keep `instruments`.
 
 ### Pass 1: propagatorv3 writes the archive (done)
 - `{"archive":1}` writes every step's telemetry (`json_soh_payload`) and every
@@ -257,7 +268,8 @@ or the 643 nm WAC tiles reduced to ≈ 4 pixels/degree.
 - [x] Pass 1: propagatorv3 `{"archive":1}` writes hourly telemetry/event files
 - [x] SOST: load a time window from the archive (telemetry + events)
 - [ ] Confirm Phase B1 open items with the instrument team (stripe rows, L0 bit depth, InGaAs noise, laser/ROI reduction, camera pieces)
-- [ ] Instrument configuration in the node file (`instruments.lvmm`: cameras / channels / modes / l0)
+- [x] Instrument configuration in the node file (`instruments.lvmm`: cameras / modes / l0)
+- [ ] DMT: preserve `instruments` on node save
 - [ ] Pass 2 skeleton: tile events → geolocated samples → constant-albedo radiance → noise → DN → ENVI files
 - [ ] Pass 2 active mode
 - [ ] Plug in the albedo map and forward model (task 003)
@@ -272,3 +284,4 @@ or the 643 nm WAC tiles reduced to ≈ 4 pixels/degree.
 - 2026-10-24: SOSE repo created on Bitbucket and scaffolded (CMake against COSMOSv5, `archive_query` lists the archive files for a window, its task 001 = archive server agent). Pushed (89df94e). It needs the micro-agent datalib helpers (c031161).
 - 2026-10-24: SOST Archive button opens a dialog: node (or all), begin/end UTC defaulting to the archived span, Load, or "From file..." (the old single-file load). `GuiClock::ArchiveDir/ArchiveNodes/ArchiveSpan/ReadArchive` (tool-libraries `guidata`) read whole hourly files covering the window as REQUESTED; written with std::filesystem and get_cosmosroot, not the new datalib helpers, so tool-libraries still builds against cosmos-core. `UpdateData` now also reads soh `powerout`, `battcap`, `battlev`. Harness test on the pass 1 archive, 21:36–00:28: 4 files per kind, 1440 soh + 573 events, positions and battery populated.
 - 2026-10-27: detector model replaced by the Phase B1 baseline (design report 2026-10-26): three cameras (Panda UV/VIS, two SU640CSX for NIR and SWIR) behind one 3° telescope, filter-stripe pushbroom, 7×7 / 6×6 superpixels ≈ 19.2 m, 87 cross-track, rows spaced ≈ 39.6 m with gaps. L0 is int32 BIL by acquisition with per-band along-track offsets; config moves to `instruments.lvmm`. Open items listed for the team.
+- 2026-10-27: `instruments.lvmm` added to live `lunar/nodes/vmmo.json` with placeholders: stripes within ±15 mrad, since the circular 3° field caps along-track offsets at ±15.8 mrad for the full swath; computed rows: Panda 802/948/1093/1239, SWIR 66/253/440, first columns 719 (Panda) and 59 (InGaAs). Other keys unchanged; a propagatorv3 run on lunar loads it. Committed: tool-libraries 32cf6d8 (SOST archive dialog), cosmosv5 a09a602.
